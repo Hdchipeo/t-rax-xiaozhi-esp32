@@ -1,4 +1,4 @@
-# 🦖 Robot T-Rax - Custom Board & Organic Motion Assistant
+# Robot T-Rax - Custom Board & Organic Motion Assistant
 
 Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **XiaoZhi AI Voice Assistant (ESP32-S3)**. T-Rax tương tác hoàn toàn bằng phong cách **Non-verbal (Phi ngôn ngữ - kiểu R2-D2)** kết hợp chuyển động sinh học mượt mà, cảm biến né va chạm ToF và hiệu ứng mắt thở WS2812.
 
