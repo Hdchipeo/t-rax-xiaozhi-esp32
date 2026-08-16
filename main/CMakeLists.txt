@@ -90,7 +90,12 @@ set(EMOTE_RESOLUTION "320_240")
 
 # Select the board source directory from Kconfig
 # Set default assets if the board uses partition table V2
-if(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
+if(CONFIG_BOARD_TYPE_T_RAX)
+    set(BOARD_DIR "t-rax")
+    set(BUILTIN_TEXT_FONT font_puhui_basic_20_4)
+    set(BUILTIN_ICON_FONT font_awesome_20_4)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_64)
+elseif(CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI)
     set(BOARD_DIR "bread-compact-wifi")
     set(BUILTIN_TEXT_FONT font_noto_sans_basic_14_1)
     set(BUILTIN_ICON_FONT font_material_symbols_14_1)
