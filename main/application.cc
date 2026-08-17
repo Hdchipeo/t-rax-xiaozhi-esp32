@@ -583,6 +583,12 @@ void Application::InitializeProtocol() {
             } else if (strcmp(state->valuestring, "sentence_start") == 0) {
                 auto text = cJSON_GetObjectItem(root, "text");
                 if (cJSON_IsString(text)) {
+                    // Filter out raw tool calls and JSON state strings from TTS/Display
+                    if (strncmp(text->valuestring, "% self.trax.", 12) == 0 ||
+                        strncmp(text->valuestring, "{\"state", 7) == 0 ||
+                        strncmp(text->valuestring, "{\"state_id", 10) == 0) {
+                        return;
+                    }
                     std::vector<TextGlyph> glyphs;
                     uint8_t bpp = 0;
                     if (!TextGlyphPayload::Parse(root, glyphs, bpp)) {
