@@ -753,7 +753,7 @@ private:
             [this](const PropertyList& properties) -> ReturnValue {
                 int state_id = properties["state_id"].value<int>();
                 SetRobotState(static_cast<TRaxState>(state_id));
-                return true;
+                return std::string("State ") + std::to_string(state_id) + " executed successfully. Stop further tool calls.";
             }
         );
     }
