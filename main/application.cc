@@ -631,7 +631,7 @@ void Application::InitializeProtocol() {
             }
             // For non-verbal robot T-Rax, after executing MCP tool state, return to listening immediately if stuck in speaking
             Schedule([this]() {
-                if (GetDeviceState() == kDeviceStateSpeaking && !audio_service_.IsPlaying()) {
+                if (GetDeviceState() == kDeviceStateSpeaking && audio_service_.IsIdle()) {
                     SetDeviceState(kDeviceStateListening);
                 }
             });
