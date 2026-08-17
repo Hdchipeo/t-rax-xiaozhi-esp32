@@ -662,7 +662,7 @@ private:
                     }
                 }
             }
-        }, "idle_sequence_task", 3072, this, 2, &board->idle_task_handle_);
+        }, "idle_sequence_task", 3072, this, 2, &idle_task_handle_);
     }
 
     void InitializeButtons() {
