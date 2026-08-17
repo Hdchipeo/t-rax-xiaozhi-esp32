@@ -12,8 +12,8 @@
 
 // INMP441 I2S Microphone pins
 #define AUDIO_I2S_MIC_GPIO_WS GPIO_NUM_1
-#define AUDIO_I2S_MIC_GPIO_DIN GPIO_NUM_2
-#define AUDIO_I2S_MIC_GPIO_SCK GPIO_NUM_3
+#define AUDIO_I2S_MIC_GPIO_SCK GPIO_NUM_2
+#define AUDIO_I2S_MIC_GPIO_DIN GPIO_NUM_3
 
 // MAX98357A I2S Amplifier pins
 #define AUDIO_I2S_SPK_GPIO_LRCK GPIO_NUM_4
@@ -39,5 +39,8 @@
 // Head Movement Servo Pins (PWM)
 #define SERVO_PAN_PAN_GPIO GPIO_NUM_8  // Trục xoay ngang (Yaw)
 #define SERVO_TILT_GPIO GPIO_NUM_9     // Trục gật lên xuống (Pitch)
+
+// Driver Enable Pin (DRV8833 nSLEEP / Amp Enable)
+#define DRIVER_ENABLE_GPIO GPIO_NUM_7
 
 #endif  // _T_RAX_BOARD_CONFIG_H_

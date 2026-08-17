@@ -758,8 +758,21 @@ private:
         );
     }
 
+    void InitializeDriverEnable() {
+        gpio_config_t io_conf = {};
+        io_conf.intr_type = GPIO_INTR_DISABLE;
+        io_conf.mode = GPIO_MODE_OUTPUT;
+        io_conf.pin_bit_mask = (1ULL << DRIVER_ENABLE_GPIO);
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+        gpio_config(&io_conf);
+        gpio_set_level(DRIVER_ENABLE_GPIO, 1);
+        ESP_LOGI(TAG, "Driver Enable GPIO %d set to HIGH (Active)", DRIVER_ENABLE_GPIO);
+    }
+
 public:
     TRaxBoard() : boot_button_(BOOT_BUTTON_GPIO) {
+        InitializeDriverEnable();
         InitializeI2c();
         InitializeWs2812Led();
         InitializeMotorPwm();
