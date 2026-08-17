@@ -1,6 +1,8 @@
-# Robot T-Rax - Organic Motion Assistant
+# 🦖 Robot T-Rax - Custom Board & Organic Non-Verbal Droid (R2-D2 Style)
 
-Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **XiaoZhi AI Voice Assistant (ESP32-S3)**. T-Rax tương tác hoàn toàn bằng phong cách **Non-verbal (Phi ngôn ngữ - kiểu R2-D2)** kết hợp chuyển động sinh học mượt mà, cảm biến né va chạm ToF và hiệu ứng mắt thở WS2812.
+Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **XiaoZhi AI Voice Assistant (ESP32-S3)**. 
+
+> ⚠️ **ĐẶC ĐIỂM CỐT LÕI**: T-Rax **KHÔNG PHÁT RA GIỌNG NÓI TIẾNG NGƯỜI**. Robot phản hồi hoàn toàn bằng âm thanh **R2-D2 Chirp/Beep**, kết hợp chuyển động sinh học mượt mà (Cubic Easing), mắt thở WS2812 và cảm biến né va chạm ToF VL53L0X.
 
 ---
 
@@ -9,7 +11,7 @@ Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **Xi
 * **Vi điều khiển chính**: ESP32-S3 SuperMini (4MB Flash, 2MB PSRAM Quad).
 * **Âm thanh I2S**:
   * Micro I2S: **INMP441**
-  * Mạch công suất âm thanh: **MAX98357A** (I2S Amp)
+  * Mạch công suất âm thanh: **MAX98357A** (Phát tiếng Bíp/Chirp R2-D2 qua sóng tổng hợp I2S)
 * **Cử động chuyển động**:
   * Động cơ Servo 2 trục cổ đầu (Pan/Tilt - Yaw/Pitch).
   * 2 Động cơ giảm tốc DC bánh xích lái qua mạch Driver **DRV8833**.
@@ -61,7 +63,7 @@ $$PWM_{out}(k) = PWM_{out}(k-1) + \alpha \cdot \big(PWM_{target} - PWM_{out}(k-1
 
 ---
 
-## 🎭 4. Ma Trận 23 Trạng Thái Cảm Xúc & Hành Vi
+## 🎭 4. Ma Trận 23 Trạng Thái Cảm Xúc & Hành Vi (Phi Ngôn Ngữ R2-D2)
 
 1. **Tò mò** (Cyan Breathing, Pan=120, Tilt=110, Whistle)
 2. **Tập trung** (Green Solid, Pan=90, Tilt=100, Beep)
