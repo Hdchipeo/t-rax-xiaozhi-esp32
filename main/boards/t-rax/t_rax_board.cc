@@ -337,8 +337,74 @@ private:
         current_led_mode_ = mode;
     }
 
+    void GenerateFrequencySweepPCM(std::vector<int16_t>& pcm_buffer, float start_freq, float end_freq, int duration_ms, float amplitude = 12000.0f) {
+        int sample_rate = AUDIO_OUTPUT_SAMPLE_RATE; // 24000 Hz
+        int samples = (sample_rate * duration_ms) / 1000;
+        pcm_buffer.reserve(pcm_buffer.size() + samples);
+
+        float phase = 0.0f;
+        for (int i = 0; i < samples; i++) {
+            float t = (float)i / (float)samples;
+            float freq = start_freq + (end_freq - start_freq) * t;
+            phase += 2.0f * M_PI * freq / sample_rate;
+            if (phase >= 2.0f * M_PI) phase -= 2.0f * M_PI;
+
+            // Envelope to avoid pop/clicks at start and end
+            float env = 1.0f;
+            if (i < 100) env = (float)i / 100.0f;
+            else if (i > samples - 100) env = (float)(samples - i) / 100.0f;
+
+            int16_t sample = (int16_t)(sinf(phase) * amplitude * env);
+            pcm_buffer.push_back(sample);
+        }
+    }
+
     void PlayR2D2Chirp(const char* sound_name) {
         ESP_LOGI(TAG, "R2D2 Audio Synthesizer: Playing [%s]", sound_name);
+        std::vector<int16_t> pcm_data;
+
+        std::string sound_str(sound_name);
+        if (sound_str == "CURIOUS_WHISTLE") {
+            GenerateFrequencySweepPCM(pcm_data, 800, 1800, 180);
+            GenerateFrequencySweepPCM(pcm_data, 1800, 1200, 120);
+        } else if (sound_str == "FOCUSED_BEEP") {
+            GenerateFrequencySweepPCM(pcm_data, 1500, 1500, 80);
+            GenerateFrequencySweepPCM(pcm_data, 2000, 2000, 80);
+        } else if (sound_str == "ALERT_SWEEP") {
+            GenerateFrequencySweepPCM(pcm_data, 600, 2800, 120);
+            GenerateFrequencySweepPCM(pcm_data, 2800, 1000, 100);
+        } else if (sound_str == "ANGRY_BUZZ") {
+            GenerateFrequencySweepPCM(pcm_data, 400, 200, 250, 15000.0f);
+        } else if (sound_str == "SCARED_SCREAM") {
+            GenerateFrequencySweepPCM(pcm_data, 3200, 1000, 300);
+        } else if (sound_str == "HAPPY_ARPEGGIO") {
+            GenerateFrequencySweepPCM(pcm_data, 1000, 1000, 40);
+            GenerateFrequencySweepPCM(pcm_data, 1400, 1400, 40);
+            GenerateFrequencySweepPCM(pcm_data, 1800, 1800, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2200, 2200, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2600, 2600, 60);
+        } else if (sound_str == "SAD_SLIDE_DOWN") {
+            GenerateFrequencySweepPCM(pcm_data, 1600, 400, 400);
+        } else if (sound_str == "TARGET_LOCK_BEEP") {
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 40);
+        } else if (sound_str == "CONFUSED_QUESTION") {
+            GenerateFrequencySweepPCM(pcm_data, 900, 900, 80);
+            GenerateFrequencySweepPCM(pcm_data, 900, 2100, 180);
+        } else if (sound_str == "SURPRISED_HIGH") {
+            GenerateFrequencySweepPCM(pcm_data, 1200, 3200, 150);
+        } else { // Default Chirp
+            GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 120);
+        }
+
+        if (!pcm_data.empty()) {
+            auto codec = GetAudioCodec();
+            if (codec != nullptr) {
+                codec->EnableOutput(true);
+                codec->OutputData(pcm_data);
+            }
+        }
     }
 
 public:
