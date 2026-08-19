@@ -96,9 +96,9 @@ private:
     uint8_t target_r_ = 0, target_g_ = 200, target_b_ = 255;
     bool is_idle_active_ = true;
 
-    // Debounce: prevent LLM from spamming identical set_state calls
+    // Debounce: prevent LLM from spamming identical set_state calls during the same turn burst
     TickType_t last_state_change_ticks_ = 0;
-    static constexpr uint32_t STATE_DEBOUNCE_MS = 10000;  // 10-second cooldown: spans entire LLM response stream + acoustic echo decay
+    static constexpr uint32_t STATE_DEBOUNCE_MS = 1200;  // 1.2-second cooldown: spans single-turn animation & prevents duplicate spam without delaying next user turn
 
     // Current Servo Base Positions
     float current_pan_ = 90.0f;

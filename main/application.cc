@@ -630,14 +630,14 @@ void Application::InitializeProtocol() {
             if (cJSON_IsObject(payload)) {
                 McpServer::GetInstance().ParseMessage(payload);
             }
-            // For non-verbal robot T-Rax, after executing MCP tool state, wait for audio playback + room echo decay before returning to listening
-            // Schedule transition ONLY ONCE per MCP burst (LLM sends 10-15+ tool calls per response)
+            // For non-verbal robot T-Rax, after executing MCP tool state, wait a brief moment for acoustic decay before returning to listening
+            // Schedule transition ONLY ONCE per MCP burst
             static std::atomic<bool> mcp_transition_scheduled{false};
             if (!mcp_transition_scheduled.exchange(true)) {
                 Schedule([this]() {
                     if (GetDeviceState() == kDeviceStateSpeaking) {
-                        // Wait 2500ms: head movement (~500ms) + audio playback (~400ms) + DMA drain (300ms) + room echo decay (~1300ms)
-                        vTaskDelay(pdMS_TO_TICKS(2500));
+                        // Brief 150ms margin for acoustic decay since SetRobotState has already completed synchronously
+                        vTaskDelay(pdMS_TO_TICKS(150));
                         SetDeviceState(kDeviceStateListening);
                     }
                     mcp_transition_scheduled.store(false);
