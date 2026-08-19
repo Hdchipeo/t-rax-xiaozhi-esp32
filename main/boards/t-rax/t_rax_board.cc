@@ -1035,13 +1035,13 @@ private:
                 if (now >= next_saccade_tick) {
                     if (is_listening) {
                         // Attentive posture: look slightly upward towards human with subtle curious tilt
-                        target_gaze_pan = 86.0f + (float)(esp_random() % 9);   // 86..94 deg
-                        target_gaze_tilt = 100.0f + (float)(esp_random() % 9); // 100..108 deg (attentive upward gaze)
+                        target_gaze_pan = 85.0f + (float)(esp_random() % 11);  // 85..95 deg
+                        target_gaze_tilt = 100.0f + (float)(esp_random() % 11); // 100..110 deg (attentive upward gaze)
                         next_saccade_tick = now + pdMS_TO_TICKS(3000 + (esp_random() % 2500));
                     } else {
-                        // Relaxed curious exploration: subtle wandering glances
-                        target_gaze_pan = 80.0f + (float)(esp_random() % 21);  // 80..100 deg
-                        target_gaze_tilt = 85.0f + (float)(esp_random() % 15); // 85..99 deg
+                        // Relaxed curious exploration: expressive wandering glances
+                        target_gaze_pan = 75.0f + (float)(esp_random() % 31);  // 75..105 deg
+                        target_gaze_tilt = 80.0f + (float)(esp_random() % 25); // 80..105 deg
                         next_saccade_tick = now + pdMS_TO_TICKS(3500 + (esp_random() % 3500));
                     }
                 }
@@ -1051,14 +1051,14 @@ private:
                 current_base_pan += (target_gaze_pan - current_base_pan) * lerp_rate;
                 current_base_tilt += (target_gaze_tilt - current_base_tilt) * lerp_rate;
 
-                // Dual-Harmonic Biomimetic Breathing Wave
-                float pan_breath = 1.6f * sinf(0.6f * sim_time) + 0.5f * cosf(1.1f * sim_time);
-                float tilt_breath = 2.2f * sinf(0.85f * sim_time) + 0.7f * sinf(1.7f * sim_time);
+                // Enhanced High-Amplitude Dual-Harmonic Biomimetic Breathing Wave
+                float pan_breath = 4.5f * sinf(0.6f * sim_time) + 1.5f * cosf(1.1f * sim_time);   // Max ~6.0 deg amplitude
+                float tilt_breath = 6.0f * sinf(0.85f * sim_time) + 2.0f * sinf(1.7f * sim_time); // Max ~8.0 deg amplitude
 
                 if (is_listening) {
-                    // Shallow, faster attentive breathing while listening to user
+                    // Attentive, medium-amplitude breathing while listening to user
                     pan_breath *= 0.5f;
-                    tilt_breath = 1.2f * sinf(1.3f * sim_time);
+                    tilt_breath = 3.5f * sinf(1.3f * sim_time);
                 }
 
                 float final_pan = current_base_pan + pan_breath;
