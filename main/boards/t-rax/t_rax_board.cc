@@ -240,11 +240,11 @@ private:
 
     void SetRawServoAngle(float pan, float tilt) {
         std::lock_guard<std::mutex> lock(servo_mutex_);
-        // Clamp to mechanical safety range (30..150 for Pan, 20..150 for Tilt)
-        if (pan < 30.0f) pan = 30.0f;
-        if (pan > 150.0f) pan = 150.0f;
-        if (tilt < 20.0f) tilt = 20.0f;
-        if (tilt > 150.0f) tilt = 150.0f;
+        // Expanded mechanical safety range (15..165 for Pan, 10..160 for Tilt)
+        if (pan < 15.0f) pan = 15.0f;
+        if (pan > 165.0f) pan = 165.0f;
+        if (tilt < 10.0f) tilt = 10.0f;
+        if (tilt > 160.0f) tilt = 160.0f;
 
         current_pan_ = pan;
         current_tilt_ = tilt;
@@ -1234,34 +1234,34 @@ private:
                     continue;
                 }
 
-                // Natural Gaze Saccade Planner (gentle curious head shifts every 3-6s)
+                // Natural Gaze Saccade Planner (expressive wide curious head shifts every 3-6s)
                 if (now >= next_saccade_tick) {
                     if (is_listening) {
                         // Attentive posture: look slightly upward towards human with subtle curious tilt
-                        target_gaze_pan = 85.0f + (float)(esp_random() % 11);  // 85..95 deg
-                        target_gaze_tilt = 100.0f + (float)(esp_random() % 11); // 100..110 deg (attentive upward gaze)
+                        target_gaze_pan = 80.0f + (float)(esp_random() % 21);  // 80..100 deg
+                        target_gaze_tilt = 100.0f + (float)(esp_random() % 16); // 100..115 deg (attentive upward gaze)
                         next_saccade_tick = now + pdMS_TO_TICKS(3000 + (esp_random() % 2500));
                     } else {
-                        // Relaxed curious exploration: expressive wandering glances
-                        target_gaze_pan = 75.0f + (float)(esp_random() % 31);  // 75..105 deg
-                        target_gaze_tilt = 80.0f + (float)(esp_random() % 25); // 80..105 deg
+                        // Wide curious exploration: full-range wandering glances across room
+                        target_gaze_pan = 40.0f + (float)(esp_random() % 101); // 40..140 deg wide horizontal sweep
+                        target_gaze_tilt = 45.0f + (float)(esp_random() % 81);  // 45..125 deg wide vertical sweep
                         next_saccade_tick = now + pdMS_TO_TICKS(3500 + (esp_random() % 3500));
                     }
                 }
 
                 // Smooth exponential low-pass filter to smoothly glide base position toward gaze target
-                float lerp_rate = is_listening ? 0.06f : 0.04f;
+                float lerp_rate = is_listening ? 0.07f : 0.05f;
                 current_base_pan += (target_gaze_pan - current_base_pan) * lerp_rate;
                 current_base_tilt += (target_gaze_tilt - current_base_tilt) * lerp_rate;
 
-                // Enhanced High-Amplitude Dual-Harmonic Biomimetic Breathing Wave
-                float pan_breath = 4.5f * sinf(0.6f * sim_time) + 1.5f * cosf(1.1f * sim_time);   // Max ~6.0 deg amplitude
-                float tilt_breath = 6.0f * sinf(0.85f * sim_time) + 2.0f * sinf(1.7f * sim_time); // Max ~8.0 deg amplitude
+                // Full-Range Dual-Harmonic Biomimetic Breathing Wave
+                float pan_breath = 8.0f * sinf(0.6f * sim_time) + 3.0f * cosf(1.1f * sim_time);    // Max ~11.0 deg amplitude
+                float tilt_breath = 10.0f * sinf(0.85f * sim_time) + 4.0f * sinf(1.7f * sim_time); // Max ~14.0 deg amplitude
 
                 if (is_listening) {
                     // Attentive, medium-amplitude breathing while listening to user
-                    pan_breath *= 0.5f;
-                    tilt_breath = 3.5f * sinf(1.3f * sim_time);
+                    pan_breath *= 0.4f;
+                    tilt_breath = 4.0f * sinf(1.3f * sim_time);
                 }
 
                 float final_pan = current_base_pan + pan_breath;
