@@ -96,6 +96,10 @@ private:
     uint8_t target_r_ = 0, target_g_ = 200, target_b_ = 255;
     bool is_idle_active_ = true;
 
+    // Debounce: prevent LLM from spamming identical set_state calls
+    TickType_t last_state_change_ticks_ = 0;
+    static constexpr uint32_t STATE_DEBOUNCE_MS = 3000;  // 3-second cooldown between same-state calls
+
     // Current Servo Base Positions
     float current_pan_ = 90.0f;
     float current_tilt_ = 90.0f;
@@ -749,14 +753,25 @@ private:
         auto& mcp_server = McpServer::GetInstance();
 
         mcp_server.AddTool("self.trax.set_state", 
-            "Đặt 1 trong 23 trạng thái cảm xúc cho Robot T-Rax (1..23)", 
+            "Đặt 1 trong 23 trạng thái cảm xúc cho Robot T-Rax (1..23). CHỈ GỌI 1 LẦN DUY NHẤT.", 
             PropertyList({
                 Property("state_id", kPropertyTypeInteger, 1, 23)
             }), 
             [this](const PropertyList& properties) -> ReturnValue {
                 int state_id = properties["state_id"].value<int>();
+
+                // === RATE-LIMITING: Reject duplicate calls within 3-second cooldown ===
+                TickType_t now = xTaskGetTickCount();
+                TickType_t elapsed_ms = (now - last_state_change_ticks_) * portTICK_PERIOD_MS;
+                if (elapsed_ms < STATE_DEBOUNCE_MS) {
+                    ESP_LOGW(TAG, "set_state(%d) REJECTED: debounce cooldown (%lu ms < %lu ms)",
+                             state_id, (unsigned long)elapsed_ms, (unsigned long)STATE_DEBOUNCE_MS);
+                    return std::string("ALREADY EXECUTED. State change is rate-limited. Do NOT call this tool again.");
+                }
+                last_state_change_ticks_ = now;
+
                 SetRobotState(static_cast<TRaxState>(state_id));
-                return std::string("State ") + std::to_string(state_id) + " executed successfully. Stop further tool calls.";
+                return std::string("State ") + std::to_string(state_id) + " applied. Do NOT call this tool again. STOP."; 
             }
         );
     }
