@@ -291,13 +291,25 @@ private:
 
     // DRV8833 LEDC Hardware PWM Smoothing Motor Controller
     void SmoothDriveMotors(float target_left, float target_right, int duration_ms, float alpha = 0.20f) {
-        int steps = duration_ms / 20;
+        // Boost motor duration by 2.2x and speed by 1.25x to significantly increase travel distance
+        int scaled_duration = (int)(duration_ms * 2.2f);
+        if (scaled_duration < 100) scaled_duration = 100;
+
+        float boosted_left = target_left * 1.25f;
+        if (boosted_left > 1.0f) boosted_left = 1.0f;
+        if (boosted_left < -1.0f) boosted_left = -1.0f;
+
+        float boosted_right = target_right * 1.25f;
+        if (boosted_right > 1.0f) boosted_right = 1.0f;
+        if (boosted_right < -1.0f) boosted_right = -1.0f;
+
+        int steps = scaled_duration / 20;
         if (steps < 1) steps = 1;
 
         for (int i = 0; i < steps; i++) {
             // Low-Pass Filter: PWM_out(k) = PWM_out(k-1) + alpha * (PWM_target - PWM_out(k-1))
-            pwm_out_left_ = pwm_out_left_ + alpha * (target_left - pwm_out_left_);
-            pwm_out_right_ = pwm_out_right_ + alpha * (target_right - pwm_out_right_);
+            pwm_out_left_ = pwm_out_left_ + alpha * (boosted_left - pwm_out_left_);
+            pwm_out_right_ = pwm_out_right_ + alpha * (boosted_right - pwm_out_right_);
 
             // Left Motor Duty (LEDC Channels 2 & 3)
             uint32_t duty_left = (uint32_t)(fabsf(pwm_out_left_) * 255.0f);
