@@ -16,6 +16,7 @@
 #include <freertos/task.h>
 #include <math.h>
 #include <mutex>
+#include <atomic>
 #include <esp_random.h>
 
 #define TAG "TRaxBoard"
@@ -88,19 +89,20 @@ private:
     TaskHandle_t idle_task_handle_ = nullptr;
 
     led_strip_handle_t eye_led_strip_ = nullptr;
-    std::mutex led_mutex_; // Thread safety lock for RMT LED strip
+    std::mutex led_mutex_;   // Thread safety lock for RMT LED strip
+    std::mutex servo_mutex_; // Thread safety lock for Servos & LEDC PWM
     TickType_t last_tof_trigger_time_ = 0;
 
     TRaxState current_state_ = kStateIdle;
     EyeLedMode current_led_mode_ = kEyeModeBreathing;
     uint8_t target_r_ = 0, target_g_ = 200, target_b_ = 255;
-    bool is_idle_active_ = true;
+    std::atomic<bool> is_performing_action_{false}; // Pauses idle micro-movements during emotion execution
 
     // Debounce: prevent LLM from spamming identical set_state calls during the same turn burst
     TickType_t last_state_change_ticks_ = 0;
     static constexpr uint32_t STATE_DEBOUNCE_MS = 1200;  // 1.2-second cooldown: spans single-turn animation & prevents duplicate spam without delaying next user turn
 
-    // Current Servo Base Positions
+    // Current Servo Physical Positions
     float current_pan_ = 90.0f;
     float current_tilt_ = 90.0f;
 
@@ -237,6 +239,13 @@ private:
     }
 
     void SetRawServoAngle(float pan, float tilt) {
+        std::lock_guard<std::mutex> lock(servo_mutex_);
+        // Clamp to mechanical safety range (30..150 for Pan, 20..150 for Tilt)
+        if (pan < 30.0f) pan = 30.0f;
+        if (pan > 150.0f) pan = 150.0f;
+        if (tilt < 20.0f) tilt = 20.0f;
+        if (tilt > 150.0f) tilt = 150.0f;
+
         current_pan_ = pan;
         current_tilt_ = tilt;
         uint32_t pan_duty = 205 + (uint32_t)((pan * 410.0f) / 180.0f);
@@ -249,10 +258,14 @@ private:
         ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
     }
 
-    // Organic Servo Motion with Cubic Easing
+    // Organic Servo Motion with Cubic Easing & Continuous Trajectory
     void OrganicMoveHead(float target_pan, float target_tilt, int duration_ms, bool use_overshoot = false) {
-        float start_pan = current_pan_;
-        float start_tilt = current_tilt_;
+        float start_pan, start_tilt;
+        {
+            std::lock_guard<std::mutex> lock(servo_mutex_);
+            start_pan = current_pan_;
+            start_tilt = current_tilt_;
+        }
         int steps = duration_ms / 20; // 50 FPS (20ms step)
         if (steps < 1) steps = 1;
 
@@ -265,7 +278,7 @@ private:
 
             SetRawServoAngle(current_p, current_t);
 
-            // Dynamically modulate target RGB brightness during fast head movement (without concurrent RMT refresh call)
+            // Dynamically modulate target RGB brightness during fast head movement
             float velocity = fabsf(target_pan - start_pan) + fabsf(target_tilt - start_tilt);
             if (velocity > 30.0f) {
                 float intensity = 0.6f + 0.4f * sinf(t * M_PI);
@@ -418,7 +431,7 @@ public:
     // Multi-Sensory Sequencer (Synchronized Head -> Audio -> Motor)
     void SetRobotState(TRaxState state) {
         current_state_ = state;
-        is_idle_active_ = (state == kStateIdle);
+        is_performing_action_.store(true);
 
         ESP_LOGI(TAG, "========== Organic Sequencer State: %d ==========", (int)state);
 
@@ -574,6 +587,9 @@ public:
                 OrganicMoveHead(90, 90, 400);
                 break;
         }
+
+        // Action completed, resume gentle organic breathing & micro-saccades seamlessly
+        is_performing_action_.store(false);
     }
 
 private:
@@ -684,56 +700,74 @@ private:
         }, "eye_led_task", 3072, this, 3, &led_task_handle_);
     }
 
+    // Living Biomimetic Organism Simulator: Dual-Harmonic Breathing & Attentive Gaze Tracking
     void StartIdleSequenceTask() {
         xTaskCreate([](void* arg) {
             auto board = static_cast<TRaxBoard*>(arg);
-            float idle_time = 0.0f;
+            float sim_time = 0.0f;
+            float target_gaze_pan = 90.0f;
+            float target_gaze_tilt = 90.0f;
+            float current_base_pan = 90.0f;
+            float current_base_tilt = 90.0f;
+            TickType_t next_saccade_tick = xTaskGetTickCount() + pdMS_TO_TICKS(2500);
 
             while (true) {
-                vTaskDelay(pdMS_TO_TICKS(50));
+                vTaskDelay(pdMS_TO_TICKS(25)); // 40 FPS silky-smooth animation loop
 
-                if (!board->is_idle_active_) continue;
+                // When an emotion/tool call action is running, sync base coordinates and yield
+                if (board->is_performing_action_.load()) {
+                    {
+                        std::lock_guard<std::mutex> lock(board->servo_mutex_);
+                        current_base_pan = board->current_pan_;
+                        current_base_tilt = board->current_tilt_;
+                        target_gaze_pan = current_base_pan;
+                        target_gaze_tilt = current_base_tilt;
+                    }
+                    sim_time = 0.0f;
+                    continue;
+                }
 
-                idle_time += 0.05f;
+                sim_time += 0.025f;
+                TickType_t now = xTaskGetTickCount();
 
-                float pan_jitter = 1.2f * sinf(0.4f * idle_time) + 0.6f * cosf(0.2f * idle_time);
-                float tilt_jitter = 0.8f * sinf(0.3f * idle_time) + 0.4f * cosf(0.5f * idle_time);
+                // Device State Awareness (Attentive Listening vs Relaxed Idle)
+                auto dev_state = Application::GetInstance().GetDeviceState();
+                bool is_listening = (dev_state == kDeviceStateListening);
 
-                board->SetRawServoAngle(90.0f + pan_jitter, 90.0f + tilt_jitter);
-
-                if (((int)(idle_time * 20.0f) % 180) == 0) {
-                    uint32_t rand_seq = esp_random() % 5;
-                    switch (rand_seq) {
-                        case 0:
-                            board->OrganicMoveHead(125, 100, 600);
-                            board->PlayR2D2Chirp("IDLE_LOOK_LEFT");
-                            vTaskDelay(pdMS_TO_TICKS(1000));
-                            board->OrganicMoveHead(90, 90, 500);
-                            break;
-                        case 1:
-                            board->OrganicMoveHead(55, 100, 600);
-                            board->PlayR2D2Chirp("IDLE_LOOK_RIGHT");
-                            vTaskDelay(pdMS_TO_TICKS(1000));
-                            board->OrganicMoveHead(90, 90, 500);
-                            break;
-                        case 2:
-                            board->OrganicMoveHead(90, 125, 500);
-                            board->PlayR2D2Chirp("IDLE_LOOK_UP");
-                            vTaskDelay(pdMS_TO_TICKS(800));
-                            board->OrganicMoveHead(90, 90, 400);
-                            break;
-                        case 3:
-                            board->SmoothDriveMotors(0.8f, -0.8f, 150);
-                            board->SmoothDriveMotors(-0.8f, 0.8f, 150);
-                            board->StopMotors();
-                            break;
-                        case 4:
-                            board->SetEyeColor(0, 200, 255, kEyeModeOff);
-                            vTaskDelay(pdMS_TO_TICKS(80));
-                            board->SetEyeColor(0, 200, 255, kEyeModeBreathing);
-                            break;
+                // Natural Gaze Saccade Planner (gentle curious head shifts every 3-6s)
+                if (now >= next_saccade_tick) {
+                    if (is_listening) {
+                        // Attentive posture: look slightly upward towards human with subtle curious tilt
+                        target_gaze_pan = 86.0f + (float)(esp_random() % 9);   // 86..94 deg
+                        target_gaze_tilt = 100.0f + (float)(esp_random() % 9); // 100..108 deg (attentive upward gaze)
+                        next_saccade_tick = now + pdMS_TO_TICKS(3000 + (esp_random() % 2500));
+                    } else {
+                        // Relaxed curious exploration: subtle wandering glances
+                        target_gaze_pan = 80.0f + (float)(esp_random() % 21);  // 80..100 deg
+                        target_gaze_tilt = 85.0f + (float)(esp_random() % 15); // 85..99 deg
+                        next_saccade_tick = now + pdMS_TO_TICKS(3500 + (esp_random() % 3500));
                     }
                 }
+
+                // Smooth exponential low-pass filter to smoothly glide base position toward gaze target
+                float lerp_rate = is_listening ? 0.06f : 0.04f;
+                current_base_pan += (target_gaze_pan - current_base_pan) * lerp_rate;
+                current_base_tilt += (target_gaze_tilt - current_base_tilt) * lerp_rate;
+
+                // Dual-Harmonic Biomimetic Breathing Wave
+                float pan_breath = 1.6f * sinf(0.6f * sim_time) + 0.5f * cosf(1.1f * sim_time);
+                float tilt_breath = 2.2f * sinf(0.85f * sim_time) + 0.7f * sinf(1.7f * sim_time);
+
+                if (is_listening) {
+                    // Shallow, faster attentive breathing while listening to user
+                    pan_breath *= 0.5f;
+                    tilt_breath = 1.2f * sinf(1.3f * sim_time);
+                }
+
+                float final_pan = current_base_pan + pan_breath;
+                float final_tilt = current_base_tilt + tilt_breath;
+
+                board->SetRawServoAngle(final_pan, final_tilt);
             }
         }, "idle_sequence_task", 3072, this, 2, &idle_task_handle_);
     }
