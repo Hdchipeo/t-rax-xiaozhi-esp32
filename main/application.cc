@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include <cJSON.h>
 #include <cstring>
+#include <atomic>
 
 #define TAG "Application"
 
@@ -630,12 +631,18 @@ void Application::InitializeProtocol() {
                 McpServer::GetInstance().ParseMessage(payload);
             }
             // For non-verbal robot T-Rax, after executing MCP tool state, wait for audio playback + room echo decay before returning to listening
-            Schedule([this]() {
-                if (GetDeviceState() == kDeviceStateSpeaking) {
-                    vTaskDelay(pdMS_TO_TICKS(600));
-                    SetDeviceState(kDeviceStateListening);
-                }
-            });
+            // Schedule transition ONLY ONCE per MCP burst (LLM sends 10-15+ tool calls per response)
+            static std::atomic<bool> mcp_transition_scheduled{false};
+            if (!mcp_transition_scheduled.exchange(true)) {
+                Schedule([this]() {
+                    if (GetDeviceState() == kDeviceStateSpeaking) {
+                        // Wait 2500ms: head movement (~500ms) + audio playback (~400ms) + DMA drain (300ms) + room echo decay (~1300ms)
+                        vTaskDelay(pdMS_TO_TICKS(2500));
+                        SetDeviceState(kDeviceStateListening);
+                    }
+                    mcp_transition_scheduled.store(false);
+                });
+            }
         } else if (strcmp(type->valuestring, "system") == 0) {
             auto command = cJSON_GetObjectItem(root, "command");
             if (cJSON_IsString(command)) {

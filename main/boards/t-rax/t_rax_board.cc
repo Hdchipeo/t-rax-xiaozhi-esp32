@@ -98,7 +98,7 @@ private:
 
     // Debounce: prevent LLM from spamming identical set_state calls
     TickType_t last_state_change_ticks_ = 0;
-    static constexpr uint32_t STATE_DEBOUNCE_MS = 3000;  // 3-second cooldown between same-state calls
+    static constexpr uint32_t STATE_DEBOUNCE_MS = 10000;  // 10-second cooldown: spans entire LLM response stream + acoustic echo decay
 
     // Current Servo Base Positions
     float current_pan_ = 90.0f;
