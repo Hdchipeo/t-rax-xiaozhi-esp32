@@ -411,6 +411,41 @@ private:
             GenerateFrequencySweepPCM(pcm_data, 900, 2100, 180);
         } else if (sound_str == "SURPRISED_HIGH") {
             GenerateFrequencySweepPCM(pcm_data, 1200, 3200, 150);
+        } else if (sound_str == "SUSPICIOUS_LOW") {
+            GenerateFrequencySweepPCM(pcm_data, 700, 350, 350);
+        } else if (sound_str == "LOVING_PURR") {
+            GenerateFrequencySweepPCM(pcm_data, 600, 900, 120);
+            GenerateFrequencySweepPCM(pcm_data, 900, 700, 120);
+            GenerateFrequencySweepPCM(pcm_data, 700, 1000, 150);
+        } else if (sound_str == "FANFARE_CHIRP") {
+            GenerateFrequencySweepPCM(pcm_data, 800, 1200, 80);
+            GenerateFrequencySweepPCM(pcm_data, 1200, 1600, 80);
+            GenerateFrequencySweepPCM(pcm_data, 1600, 2400, 140);
+        } else if (sound_str == "SHY_WHIMPER") {
+            GenerateFrequencySweepPCM(pcm_data, 2400, 1600, 250);
+        } else if (sound_str == "BORED_SIGH") {
+            GenerateFrequencySweepPCM(pcm_data, 1000, 350, 500);
+        } else if (sound_str == "PROUD_TUNE") {
+            GenerateFrequencySweepPCM(pcm_data, 1200, 1800, 90);
+            GenerateFrequencySweepPCM(pcm_data, 1800, 2600, 150);
+        } else if (sound_str == "SCANNING_RADAR") {
+            GenerateFrequencySweepPCM(pcm_data, 2600, 2600, 50);
+            GenerateFrequencySweepPCM(pcm_data, 2800, 2800, 50);
+            GenerateFrequencySweepPCM(pcm_data, 3000, 3000, 50);
+        } else if (sound_str == "GLITCH_NOISE") {
+            GenerateFrequencySweepPCM(pcm_data, 300, 2400, 60);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 400, 60);
+            GenerateFrequencySweepPCM(pcm_data, 500, 2000, 60);
+        } else if (sound_str == "LOW_POWER_BEEP") {
+            GenerateFrequencySweepPCM(pcm_data, 500, 150, 400);
+        } else if (sound_str == "CHARGING_HUM") {
+            GenerateFrequencySweepPCM(pcm_data, 250, 750, 400);
+        } else if (sound_str == "SNIFF_CHIRP") {
+            GenerateFrequencySweepPCM(pcm_data, 1200, 1600, 60);
+            GenerateFrequencySweepPCM(pcm_data, 1600, 1400, 60);
+        } else if (sound_str == "YAWN_TUNE") {
+            GenerateFrequencySweepPCM(pcm_data, 450, 1100, 350);
+            GenerateFrequencySweepPCM(pcm_data, 1100, 350, 450);
         } else { // Default Chirp
             GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 120);
         }
@@ -421,10 +456,110 @@ private:
                 codec->EnableOutput(true);
                 codec->OutputData(pcm_data);
                 // Allow hardware I2S DMA playback to finish and acoustic room echo to decay
-                vTaskDelay(pdMS_TO_TICKS(300));
+                vTaskDelay(pdMS_TO_TICKS(200));
                 codec->EnableOutput(false);
             }
         }
+    }
+
+    // 8 Improvised Spontaneous Choreography Scenarios
+    void PerformImprovisedScenario(int scenario_id) {
+        is_performing_action_.store(true);
+        ESP_LOGI(TAG, "🎭 Executing Improvised Scenario #%d", scenario_id);
+
+        switch (scenario_id % 8) {
+            case 0: // 👃 Scenario 0: "Sniff & Explore" (Đánh hơi & Khám phá môi trường)
+                SetEyeColor(0, 220, 255, kEyeModeBreathing);
+                OrganicMoveHead(60, 40, 450); // Sniff down-left
+                PlayR2D2Chirp("SNIFF_CHIRP");
+                vTaskDelay(pdMS_TO_TICKS(250));
+                OrganicMoveHead(120, 40, 500); // Sniff down-right
+                PlayR2D2Chirp("SNIFF_CHIRP");
+                vTaskDelay(pdMS_TO_TICKS(250));
+                OrganicMoveHead(90, 115, 350, true); // Look up proud
+                PlayR2D2Chirp("CURIOUS_WHISTLE");
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 1: // 💃 Scenario 1: "Playful Wiggle Dance" (Vũ điệu lắc hông vui nhộn)
+                SetEyeColor(255, 215, 0, kEyeModeStrobe);
+                OrganicMoveHead(75, 110, 250);
+                SmoothDriveMotors(0.75f, -0.75f, 180);
+                OrganicMoveHead(105, 110, 250);
+                SmoothDriveMotors(-0.75f, 0.75f, 180);
+                StopMotors();
+                OrganicMoveHead(90, 125, 200, true);
+                PlayR2D2Chirp("HAPPY_ARPEGGIO");
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 2: // 🐾 Scenario 2: "Sneaky Dino Prowl" (Rình rập chậm rãi, bước lén)
+                SetEyeColor(255, 100, 0, kEyeModeBreathing);
+                OrganicMoveHead(90, 50, 400); // Head low
+                SmoothDriveMotors(0.45f, 0.45f, 250, 0.3f); // Creep forward
+                StopMotors();
+                OrganicMoveHead(135, 70, 250, true); // Snap look left
+                vTaskDelay(pdMS_TO_TICKS(350));
+                OrganicMoveHead(45, 70, 250, true);  // Snap look right
+                vTaskDelay(pdMS_TO_TICKS(350));
+                OrganicMoveHead(90, 90, 350);
+                break;
+
+            case 3: // 🦜 Scenario 3: "Curious Bird Tilt" (Nghiêng đầu ngơ ngác)
+                SetEyeColor(0, 255, 180, kEyeModeSolid);
+                OrganicMoveHead(115, 115, 300, true); // Curious cocked head
+                PlayR2D2Chirp("CONFUSED_QUESTION");
+                vTaskDelay(pdMS_TO_TICKS(500));
+                OrganicMoveHead(65, 115, 350, true); // Cock other side
+                vTaskDelay(pdMS_TO_TICKS(400));
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 4: // 👀 Scenario 4: "Surprise Look Behind" (Ngoái đầu kiểm tra sau lưng)
+                SetEyeColor(255, 255, 255, kEyeModeStrobe);
+                OrganicMoveHead(145, 95, 220, true); // Snap full left-back
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(35, 95, 280, true);  // Snap full right-back
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 90, 250);
+                break;
+
+            case 5: // 🥱 Scenario 5: "Lazy Stretch & Yawn" (Vươn vai ngáp lười biếng)
+                SetEyeColor(120, 80, 200, kEyeModeBreathing);
+                OrganicMoveHead(90, 140, 700); // High stretch
+                PlayR2D2Chirp("YAWN_TUNE");
+                vTaskDelay(pdMS_TO_TICKS(350));
+                OrganicMoveHead(90, 75, 500);  // Relax down
+                vTaskDelay(pdMS_TO_TICKS(200));
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 6: // 🏆 Scenario 6: "Victory Spin & Nod" (Xoay 1 vòng ăn mừng & gật đầu)
+                SetEyeColor(0, 255, 255, kEyeModeStrobe);
+                SmoothDriveMotors(0.80f, -0.80f, 320); // Quick pivot turn
+                StopMotors();
+                OrganicMoveHead(90, 130, 200, true);  // Nod up
+                PlayR2D2Chirp("FANFARE_CHIRP");
+                OrganicMoveHead(90, 70, 200);          // Nod down
+                OrganicMoveHead(90, 110, 200);         // Nod up
+                OrganicMoveHead(90, 90, 250);          // Center
+                break;
+
+            case 7: // 🦖 Scenario 7: "Affectionate Nudge" (Húc đầu làm nũng)
+                SetEyeColor(255, 105, 180, kEyeModeBreathing);
+                SmoothDriveMotors(0.50f, 0.50f, 150);   // Step forward
+                SmoothDriveMotors(-0.50f, -0.50f, 150);  // Step back
+                StopMotors();
+                OrganicMoveHead(90, 110, 350);          // Tilt chin up affectionately
+                PlayR2D2Chirp("LOVING_PURR");
+                vTaskDelay(pdMS_TO_TICKS(250));
+                OrganicMoveHead(90, 90, 300);
+                break;
+        }
+
+        SetEyeColor(0, 200, 255, kEyeModeBreathing);
+        is_performing_action_.store(false);
     }
 
 public:
@@ -700,7 +835,7 @@ private:
         }, "eye_led_task", 3072, this, 3, &led_task_handle_);
     }
 
-    // Living Biomimetic Organism Simulator: Dual-Harmonic Breathing & Attentive Gaze Tracking
+    // Living Biomimetic Organism Simulator: Dual-Harmonic Breathing & Attentive Gaze Tracking & Spontaneous Scenarios
     void StartIdleSequenceTask() {
         xTaskCreate([](void* arg) {
             auto board = static_cast<TRaxBoard*>(arg);
@@ -710,6 +845,7 @@ private:
             float current_base_pan = 90.0f;
             float current_base_tilt = 90.0f;
             TickType_t next_saccade_tick = xTaskGetTickCount() + pdMS_TO_TICKS(2500);
+            TickType_t next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(12000 + (esp_random() % 8000));
 
             while (true) {
                 vTaskDelay(pdMS_TO_TICKS(25)); // 40 FPS silky-smooth animation loop
@@ -730,9 +866,23 @@ private:
                 sim_time += 0.025f;
                 TickType_t now = xTaskGetTickCount();
 
-                // Device State Awareness (Attentive Listening vs Relaxed Idle)
+                // Device State Awareness (Attentive Listening vs Speaking vs Relaxed Idle)
                 auto dev_state = Application::GetInstance().GetDeviceState();
                 bool is_listening = (dev_state == kDeviceStateListening);
+                bool is_speaking = (dev_state == kDeviceStateSpeaking);
+
+                // If in active dialog, postpone spontaneous choreography
+                if (is_listening || is_speaking) {
+                    next_scenario_tick = now + pdMS_TO_TICKS(14000 + (esp_random() % 6000));
+                }
+
+                // Trigger Improvised Scenario periodically during undisturbed idle
+                if (!is_listening && !is_speaking && (now >= next_scenario_tick)) {
+                    int scenario_idx = esp_random() % 8;
+                    board->PerformImprovisedScenario(scenario_idx);
+                    next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(15000 + (esp_random() % 12000));
+                    continue;
+                }
 
                 // Natural Gaze Saccade Planner (gentle curious head shifts every 3-6s)
                 if (now >= next_saccade_tick) {
@@ -769,7 +919,7 @@ private:
 
                 board->SetRawServoAngle(final_pan, final_tilt);
             }
-        }, "idle_sequence_task", 3072, this, 2, &idle_task_handle_);
+        }, "idle_sequence_task", 4096, this, 2, &idle_task_handle_);
     }
 
     void InitializeButtons() {
