@@ -480,6 +480,24 @@ private:
             GenerateFrequencySweepPCM(pcm_data, 2200, 2200, 35);
             GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 35);
             GenerateFrequencySweepPCM(pcm_data, 2600, 2600, 45);
+        } else if (sound_str == "GIGGLE_CHIRP") {
+            GenerateFrequencySweepPCM(pcm_data, 1800, 2400, 60);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2000, 60);
+            GenerateFrequencySweepPCM(pcm_data, 2000, 2600, 80);
+        } else if (sound_str == "PRANK_ALARM_GIGGLE") {
+            GenerateFrequencySweepPCM(pcm_data, 3200, 1000, 150);
+            GenerateFrequencySweepPCM(pcm_data, 1200, 2400, 80);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 1800, 80);
+        } else if (sound_str == "RUNAWAY_CHICKEN") {
+            GenerateFrequencySweepPCM(pcm_data, 2800, 1200, 70);
+            GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 70);
+            GenerateFrequencySweepPCM(pcm_data, 2200, 1000, 90);
+        } else if (sound_str == "STUBBORN_RASPBERRY") {
+            GenerateFrequencySweepPCM(pcm_data, 450, 250, 250, 14000.0f);
+        } else if (sound_str == "PLAYFUL_BARK_CHIRP") {
+            GenerateFrequencySweepPCM(pcm_data, 2000, 2800, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2800, 2000, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2200, 3000, 60);
         } else { // Default Chirp
             GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 120);
         }
@@ -702,6 +720,69 @@ private:
                 OrganicMoveHead(100, 30, 150);
                 StopMotors();
                 OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 18: // 🙈 Scenario 18: "Peek-a-Boo Peek" (Trốn tìm lén lút)
+                SetEyeColor(0, 255, 100, kEyeModeStrobe);
+                OrganicMoveHead(40, 60, 300); // Hide sideways low
+                SmoothDriveMotors(0.30f, 0.30f, 150); // Micro step
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                OrganicMoveHead(90, 100, 200, true); // Snap head out!
+                PlayR2D2Chirp("GIGGLE_CHIRP");
+                SmoothDriveMotors(-0.30f, -0.30f, 100); // Quick retreat
+                StopMotors();
+                OrganicMoveHead(40, 60, 200); // Duck back
+                vTaskDelay(pdMS_TO_TICKS(250));
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 19: // 😜 Scenario 19: "Prank Scare & Laugh" (Báo động giả trêu đùa)
+                SetEyeColor(255, 0, 0, kEyeModeStrobe); // Alarm red
+                OrganicMoveHead(90, 135, 180, true);   // Fake surprise head up
+                SmoothDriveMotors(-0.70f, -0.70f, 200); // Jump back
+                StopMotors();
+                PlayR2D2Chirp("PRANK_ALARM_GIGGLE");
+                SetEyeColor(255, 220, 0, kEyeModeBreathing); // Switch to bright yellow laugh
+                OrganicMoveHead(45, 100, 250, true);  // Confused glance left
+                OrganicMoveHead(135, 100, 250, true); // Confused glance right
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 20: // 🐔 Scenario 20: "Fake Charge & Escape" (Dọa húc rồi bỏ chạy)
+                SetEyeColor(255, 100, 0, kEyeModeStrobe);
+                OrganicMoveHead(90, 40, 250, true);   // Head low charge pose
+                SmoothDriveMotors(0.80f, 0.80f, 400);  // Fast forward rush
+                StopMotors();
+                PlayR2D2Chirp("RUNAWAY_CHICKEN");
+                SetEyeColor(180, 0, 255, kEyeModeStrobe); // Switch to purple panic
+                OrganicMoveHead(150, 110, 200, true);  // Turn head back
+                SmoothDriveMotors(-0.80f, 0.80f, 350); // 180-degree spin escape
+                StopMotors();
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 21: // 😤 Scenario 21: "Stubborn Refusal" (Bướng bỉnh chống đối)
+                SetEyeColor(255, 20, 147, kEyeModeStrobe); // Deep pink huff
+                OrganicMoveHead(60, 80, 150, true);  // Shake left
+                OrganicMoveHead(120, 80, 150, true); // Shake right
+                OrganicMoveHead(60, 80, 150, true);  // Shake left
+                PlayR2D2Chirp("STUBBORN_RASPBERRY");
+                SmoothDriveMotors(-0.30f, 0.30f, 120); // Stubborn wheel twitch
+                StopMotors();
+                OrganicMoveHead(150, 90, 350);       // Turn head away stubborn
+                vTaskDelay(pdMS_TO_TICKS(500));
+                OrganicMoveHead(90, 90, 350);
+                break;
+
+            case 22: // 🌀 Scenario 22: "Tail Chasing Craze" (Đuổi đuôi cuồng nhiệt)
+                SetEyeColor(255, 255, 0, kEyeModeStrobe); // Rainbow golden flash
+                OrganicMoveHead(150, 50, 300, true);  // Look back at tail
+                PlayR2D2Chirp("PLAYFUL_BARK_CHIRP");
+                SmoothDriveMotors(0.90f, -0.90f, 600); // High-speed spin chasing tail
+                StopMotors();
+                OrganicMoveHead(90, 120, 250, true);  // Dizzy happy head up
+                OrganicMoveHead(90, 90, 350);
                 break;
         }
 
@@ -1025,7 +1106,7 @@ private:
 
                 // Trigger Improvised Scenario periodically during undisturbed idle
                 if (!is_listening && !is_speaking && (now >= next_scenario_tick)) {
-                    int scenario_idx = esp_random() % 18;
+                    int scenario_idx = esp_random() % 23;
                     board->PerformImprovisedScenario(scenario_idx);
                     next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(15000 + (esp_random() % 12000));
                     continue;
