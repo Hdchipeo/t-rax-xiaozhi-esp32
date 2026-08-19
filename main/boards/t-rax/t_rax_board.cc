@@ -465,6 +465,21 @@ private:
             GenerateFrequencySweepPCM(pcm_data, 900, 1400, 80);
             GenerateFrequencySweepPCM(pcm_data, 1400, 2000, 80);
             GenerateFrequencySweepPCM(pcm_data, 2000, 2800, 160);
+        } else if (sound_str == "RADAR_SWEEP_PING") {
+            GenerateFrequencySweepPCM(pcm_data, 2800, 2800, 60);
+            GenerateFrequencySweepPCM(pcm_data, 3200, 3200, 80);
+        } else if (sound_str == "CAUTIOUS_PROBE") {
+            GenerateFrequencySweepPCM(pcm_data, 1400, 1000, 180);
+            GenerateFrequencySweepPCM(pcm_data, 1000, 1200, 150);
+        } else if (sound_str == "ECHO_PULSE_CHIRP") {
+            GenerateFrequencySweepPCM(pcm_data, 1800, 1800, 50);
+            GenerateFrequencySweepPCM(pcm_data, 2200, 2200, 70);
+        } else if (sound_str == "AWE_WONDER_WHISTLE") {
+            GenerateFrequencySweepPCM(pcm_data, 600, 1800, 450);
+        } else if (sound_str == "TRAIL_HUNTER_CLICK") {
+            GenerateFrequencySweepPCM(pcm_data, 2200, 2200, 35);
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 35);
+            GenerateFrequencySweepPCM(pcm_data, 2600, 2600, 45);
         } else { // Default Chirp
             GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 120);
         }
@@ -632,6 +647,61 @@ private:
                 OrganicMoveHead(105, 130, 300); // Look left proudly
                 OrganicMoveHead(75, 130, 300);  // Look right proudly
                 OrganicMoveHead(90, 90, 350);
+                break;
+
+            case 13: // 📡 Scenario 13: "Long-Range Scan" (Thám sát tầm xa)
+                SetEyeColor(0, 100, 255, kEyeModeStrobe);
+                OrganicMoveHead(90, 135, 300); // Head high
+                OrganicMoveHead(30, 135, 700); // Slow sweep left
+                PlayR2D2Chirp("RADAR_SWEEP_PING");
+                OrganicMoveHead(150, 135, 900); // Slow sweep right
+                PlayR2D2Chirp("RADAR_SWEEP_PING");
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 14: // 🚪 Scenario 14: "Narrow Gap Probe" (Lách khe hẹp)
+                SetEyeColor(255, 200, 0, kEyeModeStrobe);
+                OrganicMoveHead(45, 60, 350); // Peer left low
+                SmoothDriveMotors(0.20f, 0.20f, 120); // Step forward cautiously
+                StopMotors();
+                PlayR2D2Chirp("CAUTIOUS_PROBE");
+                OrganicMoveHead(135, 60, 400); // Peer right low
+                SmoothDriveMotors(-0.20f, -0.20f, 100); // Hesitant step back
+                StopMotors();
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 15: // 🧱 Scenario 15: "Wall Tracker" (Dò vách địa hình)
+                SetEyeColor(0, 255, 120, kEyeModeBreathing);
+                OrganicMoveHead(150, 85, 300); // Head turned sideways to "listen to wall"
+                PlayR2D2Chirp("ECHO_PULSE_CHIRP");
+                SmoothDriveMotors(0.40f, 0.25f, 300); // Parallel wall curve
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 16: // 🌌 Scenario 16: "Ceiling Recon" (Thám hiểm tầm cao)
+                SetEyeColor(160, 30, 255, kEyeModeBreathing);
+                OrganicMoveHead(90, 140, 500); // Look straight up at ceiling
+                PlayR2D2Chirp("AWE_WONDER_WHISTLE");
+                SmoothDriveMotors(0.25f, -0.25f, 400); // Slow pivot turn looking up
+                StopMotors();
+                OrganicMoveHead(80, 140, 200);
+                OrganicMoveHead(100, 140, 200);
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 17: // 🐾 Scenario 17: "Trail Hunter" (Dò vết mặt đất)
+                SetEyeColor(255, 120, 0, kEyeModeStrobe);
+                OrganicMoveHead(90, 30, 300); // Nose down to ground
+                PlayR2D2Chirp("TRAIL_HUNTER_CLICK");
+                SmoothDriveMotors(0.35f, -0.15f, 150); // Zig-zag left
+                OrganicMoveHead(80, 30, 150);
+                SmoothDriveMotors(-0.15f, 0.35f, 150); // Zig-zag right
+                OrganicMoveHead(100, 30, 150);
+                StopMotors();
+                OrganicMoveHead(90, 90, 300);
                 break;
         }
 
@@ -955,7 +1025,7 @@ private:
 
                 // Trigger Improvised Scenario periodically during undisturbed idle
                 if (!is_listening && !is_speaking && (now >= next_scenario_tick)) {
-                    int scenario_idx = esp_random() % 13;
+                    int scenario_idx = esp_random() % 18;
                     board->PerformImprovisedScenario(scenario_idx);
                     next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(15000 + (esp_random() % 12000));
                     continue;
