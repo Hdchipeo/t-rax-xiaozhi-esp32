@@ -403,6 +403,9 @@ private:
             if (codec != nullptr) {
                 codec->EnableOutput(true);
                 codec->OutputData(pcm_data);
+                // Allow hardware I2S DMA playback to finish and acoustic room echo to decay
+                vTaskDelay(pdMS_TO_TICKS(300));
+                codec->EnableOutput(false);
             }
         }
     }

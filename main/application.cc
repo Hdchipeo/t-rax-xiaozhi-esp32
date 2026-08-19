@@ -629,9 +629,10 @@ void Application::InitializeProtocol() {
             if (cJSON_IsObject(payload)) {
                 McpServer::GetInstance().ParseMessage(payload);
             }
-            // For non-verbal robot T-Rax, after executing MCP tool state, return to listening immediately if stuck in speaking
+            // For non-verbal robot T-Rax, after executing MCP tool state, wait for audio playback + room echo decay before returning to listening
             Schedule([this]() {
-                if (GetDeviceState() == kDeviceStateSpeaking && audio_service_.IsIdle()) {
+                if (GetDeviceState() == kDeviceStateSpeaking) {
+                    vTaskDelay(pdMS_TO_TICKS(600));
                     SetDeviceState(kDeviceStateListening);
                 }
             });
