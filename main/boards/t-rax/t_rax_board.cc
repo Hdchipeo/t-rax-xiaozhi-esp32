@@ -446,6 +446,25 @@ private:
         } else if (sound_str == "YAWN_TUNE") {
             GenerateFrequencySweepPCM(pcm_data, 450, 1100, 350);
             GenerateFrequencySweepPCM(pcm_data, 1100, 350, 450);
+        } else if (sound_str == "ALARM_SCREAM") {
+            GenerateFrequencySweepPCM(pcm_data, 3400, 1000, 120);
+            GenerateFrequencySweepPCM(pcm_data, 3400, 1000, 120);
+            GenerateFrequencySweepPCM(pcm_data, 3400, 1000, 150);
+        } else if (sound_str == "LOW_POWER_DROOP") {
+            GenerateFrequencySweepPCM(pcm_data, 800, 200, 600);
+        } else if (sound_str == "CHASER_BEEPS") {
+            GenerateFrequencySweepPCM(pcm_data, 2400, 2400, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2600, 2600, 40);
+            GenerateFrequencySweepPCM(pcm_data, 2800, 2800, 40);
+            GenerateFrequencySweepPCM(pcm_data, 3000, 3000, 60);
+        } else if (sound_str == "DIZZY_WHIMPER") {
+            GenerateFrequencySweepPCM(pcm_data, 700, 1300, 120);
+            GenerateFrequencySweepPCM(pcm_data, 1300, 600, 120);
+            GenerateFrequencySweepPCM(pcm_data, 600, 1100, 150);
+        } else if (sound_str == "HERO_TRIUMPH") {
+            GenerateFrequencySweepPCM(pcm_data, 900, 1400, 80);
+            GenerateFrequencySweepPCM(pcm_data, 1400, 2000, 80);
+            GenerateFrequencySweepPCM(pcm_data, 2000, 2800, 160);
         } else { // Default Chirp
             GenerateFrequencySweepPCM(pcm_data, 1200, 2200, 120);
         }
@@ -555,6 +574,64 @@ private:
                 PlayR2D2Chirp("LOVING_PURR");
                 vTaskDelay(pdMS_TO_TICKS(250));
                 OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 8: // 🚨 Scenario 8: "Startled Reflex" (Giật mình phòng thủ)
+                SetEyeColor(255, 0, 0, kEyeModeStrobe);
+                OrganicMoveHead(90, 135, 180, true); // Snap head back
+                SmoothDriveMotors(-0.80f, -0.80f, 250); // Jump back
+                StopMotors();
+                PlayR2D2Chirp("ALARM_SCREAM");
+                OrganicMoveHead(120, 110, 180, true); // Quick glance left
+                OrganicMoveHead(60, 110, 180, true);  // Quick glance right
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 9: // 🪫 Scenario 9: "Sleepy Low Battery" (Ngủ gật kiệt sức)
+                SetEyeColor(255, 60, 0, kEyeModeBreathing);
+                OrganicMoveHead(90, 100, 400);
+                OrganicMoveHead(90, 40, 800); // Head droops slowly
+                PlayR2D2Chirp("LOW_POWER_DROOP");
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 65, 200, true); // Sudden nod awake
+                vTaskDelay(pdMS_TO_TICKS(200));
+                OrganicMoveHead(90, 30, 900); // Falls back to sleep
+                break;
+
+            case 10: // 🐛 Scenario 10: "Curious Bug Hunt" (Săn bọ tò mò)
+                SetEyeColor(0, 255, 0, kEyeModeStrobe);
+                OrganicMoveHead(90, 45, 350); // Lower head to ground
+                SmoothDriveMotors(0.35f, 0.35f, 150); // Micro step forward
+                StopMotors();
+                PlayR2D2Chirp("CHASER_BEEPS");
+                OrganicMoveHead(60, 40, 200); // Zig-zag left
+                OrganicMoveHead(120, 40, 200); // Zig-zag right
+                SmoothDriveMotors(0.35f, 0.35f, 150); // Another micro step
+                StopMotors();
+                OrganicMoveHead(90, 90, 300);
+                break;
+
+            case 11: // 💫 Scenario 11: "Dizzy Confused" (Chóng mặt ngơ ngác)
+                SetEyeColor(255, 200, 0, kEyeModeStrobe);
+                PlayR2D2Chirp("DIZZY_WHIMPER");
+                SmoothDriveMotors(-0.35f, 0.15f, 200); // Wobble backwards left
+                OrganicMoveHead(60, 110, 300);
+                SmoothDriveMotors(0.15f, -0.35f, 200); // Wobble backwards right
+                OrganicMoveHead(120, 80, 300);
+                StopMotors();
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 12: // 🦸 Scenario 12: "Proud Superhero" (Tư thế anh hùng)
+                SetEyeColor(0, 150, 255, kEyeModeSolid);
+                SmoothDriveMotors(0.65f, 0.65f, 220); // Bold hero stride
+                StopMotors();
+                OrganicMoveHead(90, 130, 300, true); // Head high proud
+                PlayR2D2Chirp("HERO_TRIUMPH");
+                vTaskDelay(pdMS_TO_TICKS(400));
+                OrganicMoveHead(105, 130, 300); // Look left proudly
+                OrganicMoveHead(75, 130, 300);  // Look right proudly
+                OrganicMoveHead(90, 90, 350);
                 break;
         }
 
@@ -878,7 +955,7 @@ private:
 
                 // Trigger Improvised Scenario periodically during undisturbed idle
                 if (!is_listening && !is_speaking && (now >= next_scenario_tick)) {
-                    int scenario_idx = esp_random() % 8;
+                    int scenario_idx = esp_random() % 13;
                     board->PerformImprovisedScenario(scenario_idx);
                     next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(15000 + (esp_random() % 12000));
                     continue;
