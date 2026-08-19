@@ -784,6 +784,128 @@ private:
                 OrganicMoveHead(90, 120, 250, true);  // Dizzy happy head up
                 OrganicMoveHead(90, 90, 350);
                 break;
+
+            case 23: // 🛸 Story Scenario 23: "Alien Contact Ritual" (Nghi thức tiếp xúc ngoài hành tinh - ~7.5s)
+                SetEyeColor(0, 255, 255, kEyeModeBreathing);
+                OrganicMoveHead(90, 140, 700); // Raise head to cosmos
+                PlayR2D2Chirp("SCANNING_RADAR");
+                vTaskDelay(pdMS_TO_TICKS(500));
+                SetEyeColor(160, 30, 255, kEyeModeStrobe); // Violet pulse
+                SmoothDriveMotors(0.60f, -0.60f, 600); // 360-degree alignment turn
+                StopMotors();
+                OrganicMoveHead(60, 120, 400); // Scan space left
+                PlayR2D2Chirp("AWE_WONDER_WHISTLE");
+                vTaskDelay(pdMS_TO_TICKS(400));
+                OrganicMoveHead(120, 120, 400); // Scan space right
+                vTaskDelay(pdMS_TO_TICKS(400));
+                SetEyeColor(255, 215, 0, kEyeModeSolid); // Golden contact!
+                PlayR2D2Chirp("FANFARE_CHIRP");
+                OrganicMoveHead(90, 130, 300, true); // Head nod signal
+                vTaskDelay(pdMS_TO_TICKS(500));
+                OrganicMoveHead(90, 70, 600); // Respectful cosmos bow
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 24: // 🦟 Story Scenario 24: "The Great Mosquito Battle" (Cuộc điền dại săn muỗi - ~8.0s)
+                SetEyeColor(255, 140, 0, kEyeModeStrobe);
+                OrganicMoveHead(120, 110, 150, true); // Fast twitch left
+                PlayR2D2Chirp("ANGRY_BUZZ");
+                OrganicMoveHead(60, 90, 150, true);  // Fast twitch right
+                vTaskDelay(pdMS_TO_TICKS(200));
+                OrganicMoveHead(90, 35, 180, true);  // Snap bite down!
+                PlayR2D2Chirp("CONFUSED_QUESTION");   // Missed!
+                OrganicMoveHead(90, 120, 300);        // Look back frustrated
+                vTaskDelay(pdMS_TO_TICKS(400));
+                SetEyeColor(255, 0, 0, kEyeModeStrobe);
+                SmoothDriveMotors(0.85f, -0.85f, 300); // Spin 180 chasing bug
+                StopMotors();
+                SmoothDriveMotors(0.70f, 0.70f, 250);  // Final lunging charge!
+                OrganicMoveHead(90, 40, 150, true);   // Got it!
+                StopMotors();
+                SetEyeColor(0, 255, 0, kEyeModeStrobe);
+                PlayR2D2Chirp("HAPPY_ARPEGGIO");
+                SmoothDriveMotors(-0.60f, 0.60f, 180); // Victory wiggle
+                StopMotors();
+                OrganicMoveHead(90, 90, 350);
+                break;
+
+            case 25: // 🦴 Story Scenario 25: "Archaeologist Fossil Dig" (Nhà khảo cổ đào hóa thạch - ~8.5s)
+                SetEyeColor(255, 165, 0, kEyeModeBreathing);
+                OrganicMoveHead(90, 25, 600); // Nose to floor
+                PlayR2D2Chirp("SNIFF_CHIRP");
+                vTaskDelay(pdMS_TO_TICKS(400));
+                // Excavation digging action (alternating wheel twitches & low head shaking)
+                for (int dig = 0; dig < 3; dig++) {
+                    OrganicMoveHead(80, 25, 120);
+                    SmoothDriveMotors(0.50f, -0.20f, 120);
+                    OrganicMoveHead(100, 25, 120);
+                    SmoothDriveMotors(-0.20f, 0.50f, 120);
+                }
+                StopMotors();
+                OrganicMoveHead(90, 50, 350); // Pause digging, blow dust off
+                PlayR2D2Chirp("STUBBORN_RASPBERRY");
+                vTaskDelay(pdMS_TO_TICKS(500));
+                SetEyeColor(255, 215, 0, kEyeModeSolid); // Discovery! Gold flash
+                OrganicMoveHead(90, 135, 250, true); // Snap head high in awe
+                PlayR2D2Chirp("HERO_TRIUMPH");
+                SmoothDriveMotors(0.40f, 0.40f, 200); // Proud stride
+                StopMotors();
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 26: // ⚡ Story Scenario 26: "Thunderstorm Terror & Courage" (Cơn dông đáng sợ & Lòng dũng cảm - ~9.0s)
+                SetEyeColor(180, 0, 255, kEyeModeStrobe);
+                OrganicMoveHead(90, 140, 150, true); // Thunderclap shock!
+                PlayR2D2Chirp("SCARED_SCREAM");
+                SmoothDriveMotors(-0.85f, -0.85f, 400); // Panic reverse
+                StopMotors();
+                SetEyeColor(255, 0, 0, kEyeModeBreathing); // Trembling in fear
+                OrganicMoveHead(90, 35, 300);
+                PlayR2D2Chirp("SHY_WHIMPER");
+                for (int quake = 0; quake < 4; quake++) {
+                    SmoothDriveMotors(0.20f, -0.20f, 80);
+                    SmoothDriveMotors(-0.20f, 0.20f, 80);
+                }
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(500));
+                // Summoning inner dinosaur courage!
+                OrganicMoveHead(90, 110, 800); // Head slowly rises
+                SetEyeColor(0, 255, 255, kEyeModeSolid);
+                vTaskDelay(pdMS_TO_TICKS(400));
+                SmoothDriveMotors(0.70f, 0.70f, 250); // Stand ground charge step!
+                StopMotors();
+                OrganicMoveHead(90, 130, 250, true);
+                PlayR2D2Chirp("PROUD_TUNE");
+                OrganicMoveHead(90, 90, 400);
+                break;
+
+            case 27: // 🤖 Story Scenario 27: "Robot System Reboot & Diagnostic" (Tự khởi động lại & Kiểm tra phần cứng - ~9.5s)
+                SetEyeColor(0, 0, 0, kEyeModeOff); // Power shut down
+                OrganicMoveHead(90, 20, 800);      // Head drops limp
+                PlayR2D2Chirp("LOW_POWER_DROOP");
+                vTaskDelay(pdMS_TO_TICKS(600));
+                // Reboot sequence start
+                SetEyeColor(255, 255, 255, kEyeModeBreathing);
+                PlayR2D2Chirp("CHARGING_HUM");
+                OrganicMoveHead(90, 90, 600); // Head powers up to level
+                vTaskDelay(pdMS_TO_TICKS(400));
+                // Servo Axis Calibration
+                OrganicMoveHead(30, 90, 400);  // Pan left limit
+                OrganicMoveHead(150, 90, 500); // Pan right limit
+                OrganicMoveHead(90, 90, 300);
+                PlayR2D2Chirp("SCANNING_RADAR");
+                // Motor Drive Calibration
+                SetEyeColor(0, 255, 0, kEyeModeStrobe);
+                SmoothDriveMotors(0.40f, 0.0f, 150); // Left motor pulse
+                SmoothDriveMotors(0.0f, 0.40f, 150); // Right motor pulse
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(300));
+                // Diagnostic Complete!
+                PlayR2D2Chirp("BOOT_POWER_UP");
+                OrganicMoveHead(90, 115, 250, true);
+                SetEyeColor(0, 200, 255, kEyeModeBreathing);
+                OrganicMoveHead(90, 90, 350);
+                break;
         }
 
         SetEyeColor(0, 200, 255, kEyeModeBreathing);
@@ -1106,7 +1228,7 @@ private:
 
                 // Trigger Improvised Scenario periodically during undisturbed idle
                 if (!is_listening && !is_speaking && (now >= next_scenario_tick)) {
-                    int scenario_idx = esp_random() % 23;
+                    int scenario_idx = esp_random() % 28;
                     board->PerformImprovisedScenario(scenario_idx);
                     next_scenario_tick = xTaskGetTickCount() + pdMS_TO_TICKS(15000 + (esp_random() % 12000));
                     continue;
