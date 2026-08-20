@@ -526,12 +526,12 @@ private:
         }
     }
 
-    // 8 Improvised Spontaneous Choreography Scenarios
+    // 28 Improvised Spontaneous Choreography Scenarios (0 to 27)
     void PerformImprovisedScenario(int scenario_id) {
         is_performing_action_.store(true);
         ESP_LOGI(TAG, "🎭 Executing Improvised Scenario #%d", scenario_id);
 
-        switch (scenario_id % 8) {
+        switch (scenario_id) {
             case 0: // 👃 Scenario 0: "Sniff & Explore" (Đánh hơi & Khám phá môi trường)
                 SetEyeColor(0, 220, 255, kEyeModeBreathing);
                 OrganicMoveHead(60, 40, 450); // Sniff down-left
