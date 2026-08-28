@@ -12,6 +12,7 @@
 #include <driver/ledc.h>
 #include <esp_log.h>
 #include <esp_random.h>
+#include <esp_wifi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <led_strip.h>
@@ -1403,6 +1404,9 @@ public:
         StartTofTask();
         StartEyeLedBreathingTask();
         StartIdleSequenceTask();
+
+        // Cap Wi-Fi TX Power to 15dBm (60 * 0.25dBm) to prevent Brownout Reset during Wi-Fi connection bursts
+        esp_wifi_set_max_tx_power(60);
 
         SetRobotState(kStateBooting);
         vTaskDelay(pdMS_TO_TICKS(1000));
