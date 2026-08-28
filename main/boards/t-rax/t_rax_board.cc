@@ -293,8 +293,6 @@ private:
     // DRV8833 LEDC Hardware PWM Smoothing Motor Controller
     void SmoothDriveMotors(float target_left, float target_right, int duration_ms,
                            float alpha = 0.15f) {
-        std::lock_guard<std::mutex> lock(servo_mutex_);
-
         // Cap maximum motor power to 0.45f to prevent electrical current brownout sags on weak power rails
         float boosted_left = fminf(0.45f, fmaxf(-0.45f, target_left * 0.75f));
         float boosted_right = fminf(0.45f, fmaxf(-0.45f, target_right * 0.75f));
@@ -319,33 +317,39 @@ private:
             uint32_t duty_l2 = (pwm_out_left_ > 0.05f) ? duty_left : 0;
             uint32_t duty_l3 = (pwm_out_left_ < -0.05f) ? duty_left : 0;
 
-            if (duty_l2 != prev_l2) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, duty_l2);
-                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
-                prev_l2 = duty_l2;
-            }
-            if (duty_l3 != prev_l3) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, duty_l3);
-                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
-                prev_l3 = duty_l3;
-            }
-
             // Right Motor Duty (LEDC Channels 4 & 5)
             uint32_t duty_right = (uint32_t)(fabsf(pwm_out_right_) * 255.0f);
             uint32_t duty_r4 = (pwm_out_right_ > 0.05f) ? duty_right : 0;
             uint32_t duty_r5 = (pwm_out_right_ < -0.05f) ? duty_right : 0;
 
-            if (duty_r4 != prev_r4) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, duty_r4);
-                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4);
-                prev_r4 = duty_r4;
-            }
-            if (duty_r5 != prev_r5) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, duty_r5);
-                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5);
-                prev_r5 = duty_r5;
+            // Lock ONLY for the microsecond hardware register updates
+            {
+                std::lock_guard<std::mutex> lock(servo_mutex_);
+
+                if (duty_l2 != prev_l2) {
+                    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, duty_l2);
+                    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
+                    prev_l2 = duty_l2;
+                }
+                if (duty_l3 != prev_l3) {
+                    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, duty_l3);
+                    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
+                    prev_l3 = duty_l3;
+                }
+
+                if (duty_r4 != prev_r4) {
+                    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, duty_r4);
+                    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4);
+                    prev_r4 = duty_r4;
+                }
+                if (duty_r5 != prev_r5) {
+                    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, duty_r5);
+                    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5);
+                    prev_r5 = duty_r5;
+                }
             }
 
+            // Sleep UNLOCKED so other tasks (VAD, servos, audio) can run freely
             vTaskDelay(pdMS_TO_TICKS(20));
         }
     }
