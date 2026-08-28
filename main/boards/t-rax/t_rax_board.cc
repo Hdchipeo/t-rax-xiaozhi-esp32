@@ -292,27 +292,22 @@ private:
 
     // DRV8833 LEDC Hardware PWM Smoothing Motor Controller
     void SmoothDriveMotors(float target_left, float target_right, int duration_ms,
-                           float alpha = 0.20f) {
-        // Boost motor duration by 2.2x and speed by 1.25x to significantly increase travel distance
-        int scaled_duration = (int)(duration_ms * 2.2f);
+                           float alpha = 0.15f) {
+        std::lock_guard<std::mutex> lock(servo_mutex_);
+
+        // Cap maximum motor power to 0.45f to prevent electrical current brownout sags on weak power rails
+        float boosted_left = fminf(0.45f, fmaxf(-0.45f, target_left * 0.75f));
+        float boosted_right = fminf(0.45f, fmaxf(-0.45f, target_right * 0.75f));
+
+        int scaled_duration = (int)(duration_ms * 1.25f);
         if (scaled_duration < 100)
             scaled_duration = 100;
-
-        float boosted_left = target_left * 1.25f;
-        if (boosted_left > 1.0f)
-            boosted_left = 1.0f;
-        if (boosted_left < -1.0f)
-            boosted_left = -1.0f;
-
-        float boosted_right = target_right * 1.25f;
-        if (boosted_right > 1.0f)
-            boosted_right = 1.0f;
-        if (boosted_right < -1.0f)
-            boosted_right = -1.0f;
 
         int steps = scaled_duration / 20;
         if (steps < 1)
             steps = 1;
+
+        uint32_t prev_l2 = 999, prev_l3 = 999, prev_r4 = 999, prev_r5 = 999;
 
         for (int i = 0; i < steps; i++) {
             // Low-Pass Filter: PWM_out(k) = PWM_out(k-1) + alpha * (PWM_target - PWM_out(k-1))
@@ -321,33 +316,35 @@ private:
 
             // Left Motor Duty (LEDC Channels 2 & 3)
             uint32_t duty_left = (uint32_t)(fabsf(pwm_out_left_) * 255.0f);
-            if (pwm_out_left_ > 0.05f) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, duty_left);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, 0);
-            } else if (pwm_out_left_ < -0.05f) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, 0);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, duty_left);
-            } else {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, 0);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, 0);
+            uint32_t duty_l2 = (pwm_out_left_ > 0.05f) ? duty_left : 0;
+            uint32_t duty_l3 = (pwm_out_left_ < -0.05f) ? duty_left : 0;
+
+            if (duty_l2 != prev_l2) {
+                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2, duty_l2);
+                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
+                prev_l2 = duty_l2;
             }
-            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
-            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
+            if (duty_l3 != prev_l3) {
+                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3, duty_l3);
+                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_3);
+                prev_l3 = duty_l3;
+            }
 
             // Right Motor Duty (LEDC Channels 4 & 5)
             uint32_t duty_right = (uint32_t)(fabsf(pwm_out_right_) * 255.0f);
-            if (pwm_out_right_ > 0.05f) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, duty_right);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, 0);
-            } else if (pwm_out_right_ < -0.05f) {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, 0);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, duty_right);
-            } else {
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, 0);
-                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, 0);
+            uint32_t duty_r4 = (pwm_out_right_ > 0.05f) ? duty_right : 0;
+            uint32_t duty_r5 = (pwm_out_right_ < -0.05f) ? duty_right : 0;
+
+            if (duty_r4 != prev_r4) {
+                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, duty_r4);
+                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4);
+                prev_r4 = duty_r4;
             }
-            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4);
-            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5);
+            if (duty_r5 != prev_r5) {
+                ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5, duty_r5);
+                ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_5);
+                prev_r5 = duty_r5;
+            }
 
             vTaskDelay(pdMS_TO_TICKS(20));
         }
@@ -809,7 +806,8 @@ private:
                 OrganicMoveHead(90, 90, 350);
                 break;
 
-            case 23:  // 🛸 Story Scenario 23: "Alien Contact Ritual" (Nghi thức tiếp xúc ngoài hành tinh - ~7.5s)
+            case 23:  // 🛸 Story Scenario 23: "Alien Contact Ritual" (Nghi thức tiếp xúc ngoài hành
+                      // tinh - ~7.5s)
                 ESP_LOGI(TAG, "🛸 Scenario #23 Step 1: Raising head to cosmos...");
                 SetEyeColor(0, 255, 255, kEyeModeBreathing);
                 OrganicMoveHead(90, 140, 700);  // Raise head to cosmos
@@ -837,7 +835,8 @@ private:
                 OrganicMoveHead(90, 90, 400);
                 break;
 
-            case 24:  // 🦟 Story Scenario 24: "The Great Mosquito Battle" (Cuộc điền dại săn muỗi - ~8.0s)
+            case 24:  // 🦟 Story Scenario 24: "The Great Mosquito Battle" (Cuộc điền dại săn muỗi -
+                      // ~8.0s)
                 ESP_LOGI(TAG, "🦟 Scenario #24 Step 1: Tracking annoying bug...");
                 SetEyeColor(255, 140, 0, kEyeModeStrobe);
                 OrganicMoveHead(120, 110, 150, true);  // Fast twitch left
@@ -867,7 +866,8 @@ private:
                 OrganicMoveHead(90, 90, 350);
                 break;
 
-            case 25:  // 🦴 Story Scenario 25: "Archaeologist Fossil Dig" (Nhà khảo cổ đào hóa thạch - ~8.5s)
+            case 25:  // 🦴 Story Scenario 25: "Archaeologist Fossil Dig" (Nhà khảo cổ đào hóa thạch
+                      // - ~8.5s)
                 ESP_LOGI(TAG, "🦴 Scenario #25 Step 1: Sniffing ground...");
                 SetEyeColor(255, 165, 0, kEyeModeBreathing);
                 OrganicMoveHead(90, 25, 500);  // Nose to floor
@@ -897,7 +897,8 @@ private:
                 OrganicMoveHead(90, 90, 400);
                 break;
 
-            case 26:  // ⚡ Story Scenario 26: "Thunderstorm Terror & Courage" (Cơn dông đáng sợ & Lòng dũng cảm - ~9.0s)
+            case 26:  // ⚡ Story Scenario 26: "Thunderstorm Terror & Courage" (Cơn dông đáng sợ &
+                      // Lòng dũng cảm - ~9.0s)
                 ESP_LOGI(TAG, "⚡ Scenario #26 Step 1: Thunderclap shock...");
                 SetEyeColor(180, 0, 255, kEyeModeStrobe);
                 OrganicMoveHead(90, 140, 150, true);  // Thunderclap shock!
@@ -927,7 +928,8 @@ private:
                 OrganicMoveHead(90, 90, 400);
                 break;
 
-            case 27:  // 🤖 Story Scenario 27: "Robot System Reboot & Diagnostic" (Tự khởi động lại & Kiểm tra phần cứng - ~9.5s)
+            case 27:  // 🤖 Story Scenario 27: "Robot System Reboot & Diagnostic" (Tự khởi động lại
+                      // & Kiểm tra phần cứng - ~9.5s)
                 ESP_LOGI(TAG, "🤖 Scenario #27 Step 1: Power shutdown...");
                 SetEyeColor(0, 0, 0, kEyeModeOff);  // Power shut down
                 OrganicMoveHead(90, 20, 700);       // Head drops limp
@@ -1405,7 +1407,8 @@ public:
         StartEyeLedBreathingTask();
         StartIdleSequenceTask();
 
-        // Cap Wi-Fi TX Power to 15dBm (60 * 0.25dBm) to prevent Brownout Reset during Wi-Fi connection bursts
+        // Cap Wi-Fi TX Power to 15dBm (60 * 0.25dBm) to prevent Brownout Reset during Wi-Fi
+        // connection bursts
         esp_wifi_set_max_tx_power(60);
 
         SetRobotState(kStateBooting);
