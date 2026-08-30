@@ -6,6 +6,18 @@ Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **Xi
 
 ---
 
+## 🖼️ Hình Ảnh Thiết Kế 3D Robot T-Rax (3D Model Renders)
+
+| Góc nhìn chéo phải (Front Right) | Góc nhìn chính diện (Front View) |
+| :---: | :---: |
+| <img src="../../../docs/assets/images/t_rax_3d_front_right.png" width="400" alt="T-Rax Front Right"> | <img src="../../../docs/assets/images/t_rax_3d_front.png" width="400" alt="T-Rax Front View"> |
+
+| Góc nhìn chéo trái (Front Left) | Góc nhìn phía sau (Back View) |
+| :---: | :---: |
+| <img src="../../../docs/assets/images/t_rax_3d_front_left.png" width="400" alt="T-Rax Front Left"> | <img src="../../../docs/assets/images/t_rax_3d_back.png" width="400" alt="T-Rax Back View"> |
+
+---
+
 ## 📌 1. Cấu Hình Phần Cứng (Hardware Specs)
 
 * **Vi điều khiển chính**: ESP32-S3 SuperMini (4MB Flash, 2MB PSRAM Quad).

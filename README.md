@@ -60,6 +60,7 @@ Breadboard demo:
 - <a href="https://oshwhub.com/movecall/cuican-ai-pendant-lights-up-y" target="_blank" title="Movecall CuiCan ESP32S3">CuiCan AI Pendant</a>
 - <a href="https://github.com/WMnologo/xingzhi-ai" target="_blank" title="WMnologo-Xingzhi-1.54">WMnologo-Xingzhi-1.54TFT</a>
 - <a href="https://www.seeedstudio.com/SenseCAP-Watcher-W1-A-p-5979.html" target="_blank" title="SenseCAP Watcher">SenseCAP Watcher</a>
+- <a href="main/boards/t-rax/README.md" title="Robot T-Rax Organic Non-Verbal Droid">🦖 Robot T-Rax Organic Non-Verbal Droid (ESP32-S3)</a>
 - <a href="https://www.bilibili.com/video/BV1BHJtz6E2S/" target="_blank" title="ESP-HI Low Cost Robot Dog">ESP-HI Low Cost Robot Dog</a>
 
 <div style="display: flex; justify-content: space-between;">
