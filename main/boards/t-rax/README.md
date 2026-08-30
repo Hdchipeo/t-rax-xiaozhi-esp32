@@ -1,20 +1,17 @@
 # 🦖 Robot T-Rax - Custom Board & Organic Non-Verbal Droid (R2-D2 Style)
 
+<p align="center">
+  <img src="../../../docs/assets/images/t_rax_3d_front_right.png" width="45%" alt="T-Rax Front Right" />
+  <img src="../../../docs/assets/images/t_rax_3d_front.png" width="45%" alt="T-Rax Front View" />
+</p>
+<p align="center">
+  <img src="../../../docs/assets/images/t_rax_3d_front_left.png" width="45%" alt="T-Rax Front Left" />
+  <img src="../../../docs/assets/images/t_rax_3d_back.png" width="45%" alt="T-Rax Back View" />
+</p>
+
 Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **XiaoZhi AI Voice Assistant (ESP32-S3)**. 
 
 > ⚠️ **ĐẶC ĐIỂM CỐT LÕI**: T-Rax **KHÔNG PHÁT RA GIỌNG NÓI TIẾNG NGƯỜI**. Robot phản hồi hoàn toàn bằng âm thanh **R2-D2 Chirp/Beep**, kết hợp chuyển động sinh học mượt mà (Cubic Easing), mắt thở WS2812 và cảm biến né va chạm ToF VL53L0X.
-
----
-
-## 🖼️ Hình Ảnh Thiết Kế 3D Robot T-Rax (3D Model Renders)
-
-| Góc nhìn chéo phải (Front Right) | Góc nhìn chính diện (Front View) |
-| :---: | :---: |
-| <img src="../../../docs/assets/images/t_rax_3d_front_right.png" width="400" alt="T-Rax Front Right"> | <img src="../../../docs/assets/images/t_rax_3d_front.png" width="400" alt="T-Rax Front View"> |
-
-| Góc nhìn chéo trái (Front Left) | Góc nhìn phía sau (Back View) |
-| :---: | :---: |
-| <img src="../../../docs/assets/images/t_rax_3d_front_left.png" width="400" alt="T-Rax Front Left"> | <img src="../../../docs/assets/images/t_rax_3d_back.png" width="400" alt="T-Rax Back View"> |
 
 ---
 

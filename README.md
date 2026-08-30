@@ -10,6 +10,15 @@
 
 As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
 
+<p align="center">
+  <a href="main/boards/t-rax/README.md">
+    <img src="docs/assets/images/t_rax_3d_front_right.png" width="45%" alt="Robot T-Rax Droid" />
+    <img src="docs/assets/images/t_rax_3d_front.png" width="45%" alt="Robot T-Rax Front" />
+  </a>
+  <br />
+  <b>🦖 Robot T-Rax — ESP32-S3 Organic Non-Verbal R2-D2 Droid</b>
+</p>
+
 <img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
 
 ## Recent Updates
