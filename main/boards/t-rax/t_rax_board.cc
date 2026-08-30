@@ -1131,7 +1131,6 @@ public:
             case kStateIdle:  // 23. Chế độ IDLE
             default:
                 SetEyeColor(0, 200, 255, kEyeModeBreathing);
-                OrganicMoveHead(90, 90, 400);
                 break;
         }
 
@@ -1288,6 +1287,7 @@ private:
                             target_gaze_tilt = current_base_tilt;
                         }
                         sim_time = 0.0f;
+                        next_saccade_tick = xTaskGetTickCount() + pdMS_TO_TICKS(2500 + (esp_random() % 2000));
                         continue;
                     }
 
