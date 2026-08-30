@@ -7,7 +7,11 @@
             "sdkconfig_append": [
                 "CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y",
                 "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions/v2/4m.csv\"",
-                "CONFIG_SPIRAM_MODE_QUAD=y"
+                "CONFIG_SPIRAM_MODE_QUAD=y",
+                "CONFIG_USE_CUSTOM_WAKE_WORD=y",
+                "CONFIG_CUSTOM_WAKE_WORD=\"t rax\"",
+                "CONFIG_CUSTOM_WAKE_WORD_DISPLAY=\"T-Rax\"",
+                "CONFIG_CUSTOM_WAKE_WORD_THRESHOLD=25"
             ]
         }
     ]
