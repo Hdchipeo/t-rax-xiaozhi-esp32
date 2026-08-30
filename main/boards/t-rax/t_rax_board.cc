@@ -1376,34 +1376,141 @@ private:
     void InitializeTools() {
         auto& mcp_server = McpServer::GetInstance();
 
+        // 1. Set Emotion State Tool
         mcp_server.AddTool(
             "self.trax.set_state",
             "Đặt 1 trong 17 trạng thái cảm xúc cho Robot T-Rax (1..17: 1=Tò mò, 2=Tập trung, 3=Cảnh báo, 4=Tức giận, 5=Sợ hãi, 6=Vui vẻ, 7=Thất vọng, 8=Phát hiện mục tiêu, 9=Bối rối, 10=Ngạc nhiên, 11=Nghi ngờ, 12=Yêu thương, 13=Chiến thắng, 14=E ngại, 15=Chán nản, 16=Kiêu ngạo, 17=Tìm kiếm). CHỈ GỌI 1 LẦN DUY NHẤT.",
             PropertyList({Property("state_id", kPropertyTypeInteger, 1, 17)}),
             [this](const PropertyList& properties) -> ReturnValue {
                 int state_id = properties["state_id"].value<int>();
-
-                // Clamp state_id to valid conversational emotion range (1..17)
                 if (state_id < 1 || state_id > 17) {
                     ESP_LOGW(TAG, "set_state(%d) out of range (1..17), clamping to Happy (6)", state_id);
                     state_id = 6;
                 }
 
-                // === RATE-LIMITING: Reject duplicate calls within 3-second cooldown ===
                 TickType_t now = xTaskGetTickCount();
                 TickType_t elapsed_ms = (now - last_state_change_ticks_) * portTICK_PERIOD_MS;
                 if (elapsed_ms < STATE_DEBOUNCE_MS) {
                     ESP_LOGW(TAG, "set_state(%d) REJECTED: debounce cooldown (%lu ms < %lu ms)",
                              state_id, (unsigned long)elapsed_ms, (unsigned long)STATE_DEBOUNCE_MS);
-                    return std::string(
-                        "ALREADY EXECUTED. State change is rate-limited. Do NOT call this tool "
-                        "again.");
+                    return std::string("ALREADY EXECUTED. State change is rate-limited. Do NOT call this tool again.");
                 }
                 last_state_change_ticks_ = now;
 
                 SetRobotState(static_cast<TRaxState>(state_id));
-                return std::string("State ") + std::to_string(state_id) +
-                       " applied. Do NOT call this tool again. STOP.";
+                return std::string("State ") + std::to_string(state_id) + " applied.";
+            });
+
+        // 2. Move Forward Tool
+        mcp_server.AddTool(
+            "self.trax.move_forward",
+            "Di chuyển Robot T-Rax TIẾN tới phía trước một khoảng thời gian (duration_ms từ 200 đến 2000 ms).",
+            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 2000)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                int duration_ms = properties["duration_ms"].value<int>();
+                if (duration_ms < 100) duration_ms = 500;
+                if (duration_ms > 2000) duration_ms = 2000;
+                is_performing_action_.store(true);
+                SmoothDriveMotors(0.35f, 0.35f, duration_ms);
+                StopMotors();
+                is_performing_action_.store(false);
+                return std::string("Moved forward for ") + std::to_string(duration_ms) + " ms.";
+            });
+
+        // 3. Move Backward Tool
+        mcp_server.AddTool(
+            "self.trax.move_backward",
+            "Di chuyển Robot T-Rax LÙI về phía sau một khoảng thời gian (duration_ms từ 200 đến 2000 ms).",
+            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 2000)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                int duration_ms = properties["duration_ms"].value<int>();
+                if (duration_ms < 100) duration_ms = 500;
+                if (duration_ms > 2000) duration_ms = 2000;
+                is_performing_action_.store(true);
+                SmoothDriveMotors(-0.35f, -0.35f, duration_ms);
+                StopMotors();
+                is_performing_action_.store(false);
+                return std::string("Moved backward for ") + std::to_string(duration_ms) + " ms.";
+            });
+
+        // 4. Turn Left Tool
+        mcp_server.AddTool(
+            "self.trax.turn_left",
+            "Xoay Robot T-Rax SANG TRÁI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms).",
+            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 1500)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                int duration_ms = properties["duration_ms"].value<int>();
+                if (duration_ms < 100) duration_ms = 350;
+                if (duration_ms > 1500) duration_ms = 1500;
+                is_performing_action_.store(true);
+                SmoothDriveMotors(-0.40f, 0.40f, duration_ms);
+                StopMotors();
+                is_performing_action_.store(false);
+                return std::string("Turned left for ") + std::to_string(duration_ms) + " ms.";
+            });
+
+        // 5. Turn Right Tool
+        mcp_server.AddTool(
+            "self.trax.turn_right",
+            "Xoay Robot T-Rax SANG PHẢI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms).",
+            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 1500)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                int duration_ms = properties["duration_ms"].value<int>();
+                if (duration_ms < 100) duration_ms = 350;
+                if (duration_ms > 1500) duration_ms = 1500;
+                is_performing_action_.store(true);
+                SmoothDriveMotors(0.40f, -0.40f, duration_ms);
+                StopMotors();
+                is_performing_action_.store(false);
+                return std::string("Turned right for ") + std::to_string(duration_ms) + " ms.";
+            });
+
+        // 6. Nod Head Tool
+        mcp_server.AddTool(
+            "self.trax.nod_head",
+            "Điều khiển đầu Robot T-Rax GẬT ĐẦU thể hiện đồng ý, hài lòng.",
+            PropertyList({}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                is_performing_action_.store(true);
+                SetEyeColor(0, 255, 120, kEyeModeBreathing);
+                OrganicMoveHead(90, 120, 200);
+                OrganicMoveHead(90, 70, 200);
+                OrganicMoveHead(90, 110, 200);
+                OrganicMoveHead(90, 90, 200);
+                is_performing_action_.store(false);
+                return std::string("Nodded head.");
+            });
+
+        // 7. Shake Head Tool
+        mcp_server.AddTool(
+            "self.trax.shake_head",
+            "Điều khiển đầu Robot T-Rax LẮC ĐẦU thể hiện phản đối, bối rối hoặc từ chối.",
+            PropertyList({}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                is_performing_action_.store(true);
+                SetEyeColor(255, 100, 0, kEyeModeStrobe);
+                OrganicMoveHead(60, 90, 180);
+                OrganicMoveHead(120, 90, 180);
+                OrganicMoveHead(60, 90, 180);
+                OrganicMoveHead(90, 90, 180);
+                is_performing_action_.store(false);
+                return std::string("Shook head.");
+            });
+
+        // 8. Play R2D2 Sound Tool
+        mcp_server.AddTool(
+            "self.trax.play_sound",
+            "Phát âm thanh R2D2 đặc trưng (sound_id: 1=Vui, 2=Tức giận, 3=Bối rối, 4=Cảnh báo, 5=Sợ hãi, 6=Ngạc nhiên, 7=Chiến thắng).",
+            PropertyList({Property("sound_id", kPropertyTypeInteger, 1, 7)}),
+            [this](const PropertyList& properties) -> ReturnValue {
+                int sound_id = properties["sound_id"].value<int>();
+                const char* sounds[] = {"HAPPY_ARPEGGIO", "ANGRY_BUZZ", "CONFUSED_QUESTION",
+                                        "ALERT_SWEEP", "SCARED_SCREAM", "SURPRISED_HIGH", "HERO_TRIUMPH"};
+                if (sound_id < 1 || sound_id > 7) sound_id = 1;
+                is_performing_action_.store(true);
+                PlayR2D2Chirp(sounds[sound_id - 1]);
+                is_performing_action_.store(false);
+                return std::string("Played sound ") + std::to_string(sound_id);
             });
     }
 
