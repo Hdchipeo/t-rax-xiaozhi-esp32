@@ -1469,7 +1469,7 @@ private:
         mcp_server.AddTool(
             "self.trax.nod_head",
             "Điều khiển đầu Robot T-Rax GẬT ĐẦU thể hiện đồng ý, hài lòng.",
-            PropertyList({}),
+            PropertyList(),
             [this](const PropertyList& properties) -> ReturnValue {
                 is_performing_action_.store(true);
                 SetEyeColor(0, 255, 120, kEyeModeBreathing);
@@ -1485,7 +1485,7 @@ private:
         mcp_server.AddTool(
             "self.trax.shake_head",
             "Điều khiển đầu Robot T-Rax LẮC ĐẦU thể hiện phản đối, bối rối hoặc từ chối.",
-            PropertyList({}),
+            PropertyList(),
             [this](const PropertyList& properties) -> ReturnValue {
                 is_performing_action_.store(true);
                 SetEyeColor(255, 100, 0, kEyeModeStrobe);
