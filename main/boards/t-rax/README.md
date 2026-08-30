@@ -128,3 +128,38 @@ python3 scripts/build.py t-rax
 ```bash
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
+
+---
+
+## 7. Device-Side MCP Tool Catalog (`self.trax.*`)
+
+Robot T-Rax exposes **19+ native MCP tools** for LLM voice control:
+
+| Tool Namespace | Functionality |
+| :--- | :--- |
+| **`self.trax.wave_greeting`** | Friendly greeting posture (double nod + micro step + mint strobe + power-up chirp). |
+| **`self.trax.listen_attentively`** | Attentive listening gesture (head cocked + emerald solid eyes + focused beep). |
+| **`self.trax.think_ponder`** | Pondering thinking gesture (head tilt up-left + amber breathing eyes + question chirp). |
+| **`self.trax.express_empathy`** | Comforting empathy posture (gentle bow + step closer + rose pink eyes + purr chirp). |
+| **`self.trax.express_excitement`** | Excited celebration (head pop + 2 track wiggles + golden strobe + happy chirp). |
+| **`self.trax.nod_enthusiastic`** | Fast double nod + step forward + happy chirp. |
+| **`self.trax.nod_respectful`** | Slow bow nod + micro retreat step + cyan breathing eyes. |
+| **`self.trax.shake_emphatic`** | Defiant head shake + defensive retreat step + angry buzz. |
+| **`self.trax.shake_confused`** | Tilted head shake + track hip wiggle + question chirp. |
+| **`self.trax.move_forward`** / **`move_backward`** | Drive forward or backward (`200ms` – `2000ms`). |
+| **`self.trax.turn_left`** / **`turn_right`** | Rotate on tracks (`200ms` – `1500ms`). |
+| **`self.trax.look_around`** | 360-degree environment scan (Left 45° → Right 135° → Up → Center). |
+| **`self.trax.set_head_position`** | Direct head Pan/Tilt angle control (`Pan: 45..135°`, `Tilt: 30..140°`). |
+| **`self.trax.set_eye_color`** | Custom RGB WS2812 eye LED color & mode (`Breathing`, `Solid`, `Strobe`, `Off`). |
+| **`self.trax.dance`** | Victory celebration wiggle dance. |
+| **`self.trax.stop_all`** | Emergency halt all motor movements. |
+| **`self.trax.play_sound`** | Synthesizes R2D2 acoustic chirps (`1`=Happy, `2`=Angry, `3`=Confused, `4`=Alert, `5`=Scared, `6`=Surprised, `7`=Triumph). |
+| **`self.trax.set_state`** | Triggers composite expressional state macros (1..28). |
+
+---
+
+## 8. System Prompt Configuration
+
+For complete R2-D2 Droid personality configuration and non-verbal tool execution rules, see:
+👉 **[SYSTEM_PROMPT.md](SYSTEM_PROMPT.md)**
+
