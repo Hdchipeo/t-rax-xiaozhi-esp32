@@ -1512,6 +1512,55 @@ private:
                 is_performing_action_.store(false);
                 return std::string("Played sound ") + std::to_string(sound_id);
             });
+
+        // 9. Hardware Self-Test Diagnostic Tool
+        mcp_server.AddTool(
+            "self.trax.test_hardware",
+            "Chạy quy trình tự kiểm tra chuẩn đoán phần cứng (Servo Pan/Tilt, Động cơ Trái/Phải).",
+            PropertyList(),
+            [this](const PropertyList& properties) -> ReturnValue {
+                is_performing_action_.store(true);
+                ESP_LOGI(TAG, "Running Hardware Diagnostic Self-Test...");
+
+                // Step 1: Pan Servo Test (Left -> Center -> Right -> Center)
+                ESP_LOGI(TAG, "1/4 Testing Pan Servo (GPIO 5): Left 45 -> Center 90 -> Right 135");
+                OrganicMoveHead(45, 90, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(135, 90, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 90, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+
+                // Step 2: Tilt Servo Test (Down -> Center -> Up -> Center)
+                ESP_LOGI(TAG, "2/4 Testing Tilt Servo (GPIO 6): Down 60 -> Center 90 -> Up 120");
+                OrganicMoveHead(90, 60, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 120, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+                OrganicMoveHead(90, 90, 400);
+                vTaskDelay(pdMS_TO_TICKS(300));
+
+                // Step 3: Left Motor Test (Forward -> Backward -> Stop)
+                ESP_LOGI(TAG, "3/4 Testing Left Motor (GPIO 1 & 2): Forward -> Backward");
+                SmoothDriveMotors(0.35f, 0.0f, 400);
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                SmoothDriveMotors(-0.35f, 0.0f, 400);
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(300));
+
+                // Step 4: Right Motor Test (Forward -> Backward -> Stop)
+                ESP_LOGI(TAG, "4/4 Testing Right Motor (GPIO 3 & 4): Forward -> Backward");
+                SmoothDriveMotors(0.0f, 0.35f, 400);
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                SmoothDriveMotors(0.0f, -0.35f, 400);
+                StopMotors();
+                vTaskDelay(pdMS_TO_TICKS(300));
+
+                is_performing_action_.store(false);
+                return std::string("Hardware self-test completed successfully.");
+            });
     }
 
     void InitializeDriverEnable() {
