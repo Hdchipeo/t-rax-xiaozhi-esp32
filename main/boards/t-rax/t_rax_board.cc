@@ -116,6 +116,30 @@ private:
         1200;  // 1.2-second cooldown: spans single-turn animation & prevents duplicate spam without
                // delaying next user turn
 
+    TickType_t last_tool_call_ticks_ = 0;
+    static constexpr uint32_t GLOBAL_TOOL_DEBOUNCE_MS = 600;
+
+    bool CanExecuteTool(const char* tool_name, std::string& err_msg) {
+        TickType_t now = xTaskGetTickCount();
+        TickType_t elapsed_ms = (now - last_tool_call_ticks_) * portTICK_PERIOD_MS;
+
+        if (is_performing_action_.load()) {
+            ESP_LOGW(TAG, "Tool [%s] REJECTED: Action already in progress", tool_name);
+            err_msg = "ACTION BUSY. Robot is currently performing another action. STOP calling tools now.";
+            return false;
+        }
+
+        if (elapsed_ms < GLOBAL_TOOL_DEBOUNCE_MS) {
+            ESP_LOGW(TAG, "Tool [%s] REJECTED: Rate-limit cooldown (%lu ms < %u ms)",
+                     tool_name, (unsigned long)elapsed_ms, (unsigned int)GLOBAL_TOOL_DEBOUNCE_MS);
+            err_msg = "RATE LIMITED. Tool calls arriving too fast. STOP calling tools now.";
+            return false;
+        }
+
+        last_tool_call_ticks_ = now;
+        return true;
+    }
+
     // Current Servo Physical Positions
     float current_pan_ = 90.0f;
     float current_tilt_ = 90.0f;
@@ -2481,9 +2505,11 @@ private:
         // 2. Move Forward Tool
         mcp_server.AddTool("self.trax.move_forward",
                            "Di chuyển Robot T-Rax TIẾN tới phía trước một khoảng thời gian "
-                           "(duration_ms từ 200 đến 2000 ms).",
+                           "(duration_ms từ 200 đến 2000 ms). (Chỉ gọi 1 lần/lượt).",
                            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 2000)}),
                            [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("move_forward", err)) return err;
                                int duration_ms = properties["duration_ms"].value<int>();
                                if (duration_ms < 100)
                                    duration_ms = 500;
@@ -2500,9 +2526,11 @@ private:
         // 3. Move Backward Tool
         mcp_server.AddTool("self.trax.move_backward",
                            "Di chuyển Robot T-Rax LÙI về phía sau một khoảng thời gian "
-                           "(duration_ms từ 200 đến 2000 ms).",
+                           "(duration_ms từ 200 đến 2000 ms). (Chỉ gọi 1 lần/lượt).",
                            PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 2000)}),
                            [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("move_backward", err)) return err;
                                int duration_ms = properties["duration_ms"].value<int>();
                                if (duration_ms < 100)
                                    duration_ms = 500;
@@ -2519,9 +2547,11 @@ private:
         // 4. Turn Left Tool
         mcp_server.AddTool(
             "self.trax.turn_left",
-            "Xoay Robot T-Rax SANG TRÁI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms).",
+            "Xoay Robot T-Rax SANG TRÁI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms). (Chỉ gọi 1 lần/lượt).",
             PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 1500)}),
             [this](const PropertyList& properties) -> ReturnValue {
+                std::string err;
+                if (!CanExecuteTool("turn_left", err)) return err;
                 int duration_ms = properties["duration_ms"].value<int>();
                 if (duration_ms < 100)
                     duration_ms = 350;
@@ -2537,9 +2567,11 @@ private:
         // 5. Turn Right Tool
         mcp_server.AddTool(
             "self.trax.turn_right",
-            "Xoay Robot T-Rax SANG PHẢI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms).",
+            "Xoay Robot T-Rax SANG PHẢI tại chỗ trên xích (duration_ms từ 200 đến 1500 ms). (Chỉ gọi 1 lần/lượt).",
             PropertyList({Property("duration_ms", kPropertyTypeInteger, 200, 1500)}),
             [this](const PropertyList& properties) -> ReturnValue {
+                std::string err;
+                if (!CanExecuteTool("turn_right", err)) return err;
                 int duration_ms = properties["duration_ms"].value<int>();
                 if (duration_ms < 100)
                     duration_ms = 350;
@@ -2556,6 +2588,8 @@ private:
         mcp_server.AddTool("self.trax.nod_head",
                            "Điều khiển đầu Robot T-Rax GẬT ĐẦU cơ bản thể hiện đồng ý, hài lòng.",
                            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("nod_head", err)) return err;
                                is_performing_action_.store(true);
                                SetEyeColor(0, 255, 120, kEyeModeBreathing);
                                OrganicMoveHead(90, 120, 200);
@@ -2568,8 +2602,11 @@ private:
 
         // 6b. Nod Head Enthusiastic (Multi-Sensory: Head + Step Forward + Happy Sound)
         mcp_server.AddTool("self.trax.nod_enthusiastic",
-                           "Biến thể GẬT ĐẦU HÀO HỨNG: Gật đầu hào hứng kết hợp nhún nhẹ tiến bước, mắt chớp xanh lục & âm thanh vui vẻ.",
+                           "Biến thể GẬT ĐẦU HÀO HỨNG: Gật đầu hào hứng kết hợp nhún nhẹ tiến "
+                           "bước, mắt chớp xanh lục & âm thanh vui vẻ.",
                            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("nod_enthusiastic", err)) return err;
                                is_performing_action_.store(true);
                                SetEyeColor(0, 255, 120, kEyeModeStrobe);
                                PlayR2D2Chirp("HAPPY_ARPEGGIO");
@@ -2585,8 +2622,11 @@ private:
 
         // 6c. Nod Head Respectful (Multi-Sensory: Slow Bow + Micro Retreat + Focused Sound)
         mcp_server.AddTool("self.trax.nod_respectful",
-                           "Biến thể GẬT ĐẦU TRÂN TRỌNG: Cúi đầu lịch sự, lùi rón rén 1 bước nhỏ, mắt xanh lam ấm áp.",
+                           "Biến thể GẬT ĐẦU TRÂN TRỌNG: Cúi đầu lịch sự, lùi rón rén 1 bước nhỏ, "
+                           "mắt xanh lam ấm áp.",
                            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("nod_respectful", err)) return err;
                                is_performing_action_.store(true);
                                SetEyeColor(0, 200, 255, kEyeModeBreathing);
                                PlayR2D2Chirp("FOCUSED_BEEP");
@@ -2603,6 +2643,8 @@ private:
             "self.trax.shake_head",
             "Điều khiển đầu Robot T-Rax LẮC ĐẦU cơ bản thể hiện phản đối, bối rối hoặc từ chối.",
             PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                std::string err;
+                if (!CanExecuteTool("shake_head", err)) return err;
                 is_performing_action_.store(true);
                 SetEyeColor(255, 100, 0, kEyeModeStrobe);
                 OrganicMoveHead(60, 90, 180);
@@ -2614,39 +2656,43 @@ private:
             });
 
         // 7b. Shake Head Emphatic (Multi-Sensory: Defiant Shake + Flinch Back + Angry Sound)
-        mcp_server.AddTool(
-            "self.trax.shake_emphatic",
-            "Biến thể LẮC ĐẦU KIÊN QUYẾT: Lắc đầu mạnh mẽ dứt khoát, giật lùi động cơ phòng thủ & mắt đỏ chớp cảnh báo.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(255, 40, 0, kEyeModeStrobe);
-                PlayR2D2Chirp("ANGRY_BUZZ");
-                OrganicMoveHead(55, 80, 120, true);
-                OrganicMoveHead(125, 80, 120, true);
-                SmoothDriveMotors(-0.35f, -0.35f, 120);
-                StopMotors();
-                OrganicMoveHead(90, 90, 150);
-                is_performing_action_.store(false);
-                return std::string("Executed emphatic head shake with retreat.");
-            });
+        mcp_server.AddTool("self.trax.shake_emphatic",
+                           "Biến thể LẮC ĐẦU KIÊN QUYẾT: Lắc đầu mạnh mẽ dứt khoát, giật lùi động "
+                           "cơ phòng thủ & mắt đỏ chớp cảnh báo.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("shake_emphatic", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(255, 40, 0, kEyeModeStrobe);
+                               PlayR2D2Chirp("ANGRY_BUZZ");
+                               OrganicMoveHead(55, 80, 120, true);
+                               OrganicMoveHead(125, 80, 120, true);
+                               SmoothDriveMotors(-0.35f, -0.35f, 120);
+                               StopMotors();
+                               OrganicMoveHead(90, 90, 150);
+                               is_performing_action_.store(false);
+                               return std::string("Executed emphatic head shake with retreat.");
+                           });
 
         // 7c. Shake Head Confused (Multi-Sensory: Cocked Head + Track Wiggle + Confused Sound)
-        mcp_server.AddTool(
-            "self.trax.shake_confused",
-            "Biến thể LẮC ĐẦU BỐI RỐI: Nghiêng lắc đầu thắc mắc kết hợp lắc hông xoay xích bối rối & mắt tím mộng mơ.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(200, 0, 255, kEyeModeBreathing);
-                PlayR2D2Chirp("CONFUSED_QUESTION");
-                OrganicMoveHead(125, 115, 220, true);
-                OrganicMoveHead(55, 115, 220, true);
-                SmoothDriveMotors(0.25f, -0.25f, 70);
-                SmoothDriveMotors(-0.25f, 0.25f, 70);
-                StopMotors();
-                OrganicMoveHead(90, 95, 180);
-                is_performing_action_.store(false);
-                return std::string("Executed confused head shake with hip wiggle.");
-            });
+        mcp_server.AddTool("self.trax.shake_confused",
+                           "Biến thể LẮC ĐẦU BỐI RỐI: Nghiêng lắc đầu thắc mắc kết hợp lắc hông "
+                           "xoay xích bối rối & mắt tím mộng mơ.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("shake_confused", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(200, 0, 255, kEyeModeBreathing);
+                               PlayR2D2Chirp("CONFUSED_QUESTION");
+                               OrganicMoveHead(125, 115, 220, true);
+                               OrganicMoveHead(55, 115, 220, true);
+                               SmoothDriveMotors(0.25f, -0.25f, 70);
+                               SmoothDriveMotors(-0.25f, 0.25f, 70);
+                               StopMotors();
+                               OrganicMoveHead(90, 95, 180);
+                               is_performing_action_.store(false);
+                               return std::string("Executed confused head shake with hip wiggle.");
+                           });
 
         // 8. Play R2D2 Sound Tool
         mcp_server.AddTool("self.trax.play_sound",
@@ -2654,6 +2700,8 @@ private:
                            "4=Cảnh báo, 5=Sợ hãi, 6=Ngạc nhiên, 7=Chiến thắng).",
                            PropertyList({Property("sound_id", kPropertyTypeInteger, 1, 7)}),
                            [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("play_sound", err)) return err;
                                int sound_id = properties["sound_id"].value<int>();
                                const char* sounds[] = {"HAPPY_ARPEGGIO",    "ANGRY_BUZZ",
                                                        "CONFUSED_QUESTION", "ALERT_SWEEP",
@@ -2716,40 +2764,51 @@ private:
             });
 
         // 10. Look Around Tool
-        mcp_server.AddTool(
-            "self.trax.look_around",
-            "Cho Robot T-Rax liếc mắt nhìn quanh quét môi trường (Quét từ trái 45° sang phải 135°, ngửa cao rồi trả về trung tâm).",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(0, 220, 255, kEyeModeStrobe);
-                OrganicMoveHead(45, 100, 250);
-                vTaskDelay(pdMS_TO_TICKS(100));
-                OrganicMoveHead(135, 100, 300);
-                vTaskDelay(pdMS_TO_TICKS(100));
-                OrganicMoveHead(90, 125, 250);
-                OrganicMoveHead(90, 95, 200);
-                is_performing_action_.store(false);
-                return std::string("Looked around environment.");
-            });
+        mcp_server.AddTool("self.trax.look_around",
+                           "Cho Robot T-Rax liếc mắt nhìn quanh quét môi trường (Quét từ trái 45° "
+                           "sang phải 135°, ngửa cao rồi trả về trung tâm).",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("look_around", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(0, 220, 255, kEyeModeStrobe);
+                               OrganicMoveHead(45, 100, 250);
+                               vTaskDelay(pdMS_TO_TICKS(100));
+                               OrganicMoveHead(135, 100, 300);
+                               vTaskDelay(pdMS_TO_TICKS(100));
+                               OrganicMoveHead(90, 125, 250);
+                               OrganicMoveHead(90, 95, 200);
+                               is_performing_action_.store(false);
+                               return std::string("Looked around environment.");
+                           });
 
         // 11. Direct Head Angle Adjustment Tool
         mcp_server.AddTool(
             "self.trax.set_head_position",
-            "Điều chỉnh vị trí góc nhìn của đầu Robot T-Rax trực tiếp (pan_angle từ 45 đến 135 độ, tilt_angle từ 30 đến 140 độ, duration_ms từ 100 đến 1000 ms).",
+            "Điều chỉnh vị trí góc nhìn của đầu Robot T-Rax trực tiếp (pan_angle từ 45 đến 135 độ, "
+            "tilt_angle từ 30 đến 140 độ, duration_ms từ 100 đến 1000 ms).",
             PropertyList({Property("pan_angle", kPropertyTypeInteger, 45, 135),
                           Property("tilt_angle", kPropertyTypeInteger, 30, 140),
                           Property("duration_ms", kPropertyTypeInteger, 100, 1000)}),
             [this](const PropertyList& properties) -> ReturnValue {
+                std::string err;
+                if (!CanExecuteTool("set_head_position", err)) return err;
                 int pan = properties["pan_angle"].value<int>();
                 int tilt = properties["tilt_angle"].value<int>();
                 int duration = properties["duration_ms"].value<int>();
 
-                if (pan < 45) pan = 45;
-                if (pan > 135) pan = 135;
-                if (tilt < 30) tilt = 30;
-                if (tilt > 140) tilt = 140;
-                if (duration < 100) duration = 100;
-                if (duration > 1000) duration = 1000;
+                if (pan < 45)
+                    pan = 45;
+                if (pan > 135)
+                    pan = 135;
+                if (tilt < 30)
+                    tilt = 30;
+                if (tilt > 140)
+                    tilt = 140;
+                if (duration < 100)
+                    duration = 100;
+                if (duration > 1000)
+                    duration = 1000;
 
                 is_performing_action_.store(true);
                 OrganicMoveHead(pan, tilt, duration);
@@ -2759,147 +2818,171 @@ private:
             });
 
         // 12. Set WS2812 Eye Color & Animation Tool
-        mcp_server.AddTool(
-            "self.trax.set_eye_color",
-            "Đổi màu sắc và chế độ hiệu ứng mắt LED RGB WS2812 của T-Rax (red, green, blue từ 0..255; mode: 1=Breathing, 2=Solid, 3=Strobe, 4=Off).",
-            PropertyList({Property("red", kPropertyTypeInteger, 0, 255),
-                          Property("green", kPropertyTypeInteger, 0, 255),
-                          Property("blue", kPropertyTypeInteger, 0, 255),
-                          Property("mode", kPropertyTypeInteger, 1, 4)}),
-            [this](const PropertyList& properties) -> ReturnValue {
-                int r = properties["red"].value<int>();
-                int g = properties["green"].value<int>();
-                int b = properties["blue"].value<int>();
-                int mode_val = properties["mode"].value<int>();
+        mcp_server.AddTool("self.trax.set_eye_color",
+                           "Đổi màu sắc và chế độ hiệu ứng mắt LED RGB WS2812 của T-Rax (red, "
+                           "green, blue từ 0..255; mode: 1=Breathing, 2=Solid, 3=Strobe, 4=Off).",
+                           PropertyList({Property("red", kPropertyTypeInteger, 0, 255),
+                                         Property("green", kPropertyTypeInteger, 0, 255),
+                                         Property("blue", kPropertyTypeInteger, 0, 255),
+                                         Property("mode", kPropertyTypeInteger, 1, 4)}),
+                           [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("set_eye_color", err)) return err;
+                               int r = properties["red"].value<int>();
+                               int g = properties["green"].value<int>();
+                               int b = properties["blue"].value<int>();
+                               int mode_val = properties["mode"].value<int>();
 
-                if (r < 0) r = 0;
-                if (r > 255) r = 255;
-                if (g < 0) g = 0;
-                if (g > 255) g = 255;
-                if (b < 0) b = 0;
-                if (b > 255) b = 255;
+                               if (r < 0)
+                                   r = 0;
+                               if (r > 255)
+                                   r = 255;
+                               if (g < 0)
+                                   g = 0;
+                               if (g > 255)
+                                   g = 255;
+                               if (b < 0)
+                                   b = 0;
+                               if (b > 255)
+                                   b = 255;
 
-                EyeLedMode mode = kEyeModeBreathing;
-                if (mode_val == 2) mode = kEyeModeSolid;
-                else if (mode_val == 3) mode = kEyeModeStrobe;
-                else if (mode_val == 4) mode = kEyeModeOff;
+                               EyeLedMode mode = kEyeModeBreathing;
+                               if (mode_val == 2)
+                                   mode = kEyeModeSolid;
+                               else if (mode_val == 3)
+                                   mode = kEyeModeStrobe;
+                               else if (mode_val == 4)
+                                   mode = kEyeModeOff;
 
-                SetEyeColor(r, g, b, mode);
-                return std::string("Set eye color to RGB(") + std::to_string(r) + "," +
-                       std::to_string(g) + "," + std::to_string(b) + ") mode " + std::to_string(mode_val);
-            });
+                               SetEyeColor(r, g, b, mode);
+                               return std::string("Set eye color to RGB(") + std::to_string(r) +
+                                      "," + std::to_string(g) + "," + std::to_string(b) +
+                                      ") mode " + std::to_string(mode_val);
+                           });
 
         // 13. Celebration Wiggle Dance Tool
-        mcp_server.AddTool(
-            "self.trax.dance",
-            "Cho Robot T-Rax nhảy múa ăn mừng vui nhộn (Lắc hông bằng động cơ xích, gật đầu liên hồi, mắt chớp nháy & phát kèn khải hoàn).",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(0, 255, 200, kEyeModeStrobe);
-                PlayR2D2Chirp("HERO_TRIUMPH");
-                SmoothDriveMotors(0.40f, -0.40f, 150);
-                SmoothDriveMotors(-0.40f, 0.40f, 150);
-                SmoothDriveMotors(0.40f, -0.40f, 150);
-                StopMotors();
-                OrganicMoveHead(60, 120, 150);
-                OrganicMoveHead(120, 70, 150);
-                OrganicMoveHead(90, 95, 200);
-                is_performing_action_.store(false);
-                return std::string("Executed victory dance.");
-            });
+        mcp_server.AddTool("self.trax.dance",
+                           "Cho Robot T-Rax nhảy múa ăn mừng vui nhộn (Lắc hông bằng động cơ xích, "
+                           "gật đầu liên hồi, mắt chớp nháy & phát kèn khải hoàn).",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("dance", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(0, 255, 200, kEyeModeStrobe);
+                               PlayR2D2Chirp("HERO_TRIUMPH");
+                               SmoothDriveMotors(0.40f, -0.40f, 150);
+                               SmoothDriveMotors(-0.40f, 0.40f, 150);
+                               SmoothDriveMotors(0.40f, -0.40f, 150);
+                               StopMotors();
+                               OrganicMoveHead(60, 120, 150);
+                               OrganicMoveHead(120, 70, 150);
+                               OrganicMoveHead(90, 95, 200);
+                               is_performing_action_.store(false);
+                               return std::string("Executed victory dance.");
+                           });
 
         // 14. Emergency Stop All Tool
-        mcp_server.AddTool(
-            "self.trax.stop_all",
-            "Dừng khẩn cấp mọi chuyển động của động cơ, đưa đầu về trung tâm và reset mắt về trạng thái nghỉ.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                StopMotors();
-                OrganicMoveHead(90, 95, 200);
-                SetEyeColor(0, 200, 255, kEyeModeBreathing);
-                is_performing_action_.store(false);
-                return std::string("Stopped all motor movements and reset to Idle.");
-            });
+        mcp_server.AddTool("self.trax.stop_all",
+                           "Dừng khẩn cấp mọi chuyển động của động cơ, đưa đầu về trung tâm và "
+                           "reset mắt về trạng thái nghỉ.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               StopMotors();
+                               OrganicMoveHead(90, 95, 200);
+                               SetEyeColor(0, 200, 255, kEyeModeBreathing);
+                               is_performing_action_.store(false);
+                               return std::string("Stopped all motor movements and reset to Idle.");
+                           });
 
         // 15. Listen Attentively Conversational Gesture Tool
-        mcp_server.AddTool(
-            "self.trax.listen_attentively",
-            "Cử chỉ LẮNG NGHE CHÚ Ý: Robot nghiêng nhẹ đầu lắng nghe người dùng nói, mắt phát sáng xanh ngọc & phát tiếng bip tập trung.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(0, 255, 180, kEyeModeSolid);
-                PlayR2D2Chirp("FOCUSED_BEEP");
-                OrganicMoveHead(105, 110, 200, true);
-                vTaskDelay(pdMS_TO_TICKS(100));
-                OrganicMoveHead(90, 95, 150);
-                is_performing_action_.store(false);
-                return std::string("Attentively listening gesture executed.");
-            });
+        mcp_server.AddTool("self.trax.listen_attentively",
+                           "Cử chỉ LẮNG NGHE CHÚ Ý: Robot nghiêng nhẹ đầu lắng nghe người dùng "
+                           "nói, mắt phát sáng xanh ngọc & phát tiếng bip tập trung.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("listen_attentively", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(0, 255, 180, kEyeModeSolid);
+                               PlayR2D2Chirp("FOCUSED_BEEP");
+                               OrganicMoveHead(105, 110, 200, true);
+                               vTaskDelay(pdMS_TO_TICKS(100));
+                               OrganicMoveHead(90, 95, 150);
+                               is_performing_action_.store(false);
+                               return std::string("Attentively listening gesture executed.");
+                           });
 
         // 16. Think & Ponder Conversational Gesture Tool
-        mcp_server.AddTool(
-            "self.trax.think_ponder",
-            "Cử chỉ SUY NGHĨ TÌM CÂU TRẢ LỜI: Robot ngửa đầu nghiêng góc tư duy, mắt sáng vàng hổ phách nhịp thở & phát âm thanh bối rối tư duy.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(255, 180, 0, kEyeModeBreathing);
-                PlayR2D2Chirp("CONFUSED_QUESTION");
-                OrganicMoveHead(65, 125, 250, true);
-                vTaskDelay(pdMS_TO_TICKS(150));
-                OrganicMoveHead(90, 95, 200);
-                is_performing_action_.store(false);
-                return std::string("Pondering thinking gesture executed.");
-            });
+        mcp_server.AddTool("self.trax.think_ponder",
+                           "Cử chỉ SUY NGHĨ TÌM CÂU TRẢ LỜI: Robot ngửa đầu nghiêng góc tư duy, "
+                           "mắt sáng vàng hổ phách nhịp thở & phát âm thanh bối rối tư duy.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("think_ponder", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(255, 180, 0, kEyeModeBreathing);
+                               PlayR2D2Chirp("CONFUSED_QUESTION");
+                               OrganicMoveHead(65, 125, 250, true);
+                               vTaskDelay(pdMS_TO_TICKS(150));
+                               OrganicMoveHead(90, 95, 200);
+                               is_performing_action_.store(false);
+                               return std::string("Pondering thinking gesture executed.");
+                           });
 
         // 17. Express Empathy Conversational Gesture Tool
-        mcp_server.AddTool(
-            "self.trax.express_empathy",
-            "Cử chỉ AN ỦI THẤU HIỂU: Robot gật đầu nhẹ nhàng trân trọng, mắt hồng ấm áp & tiến nhẹ 1 bước lại gần người dùng.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(255, 120, 180, kEyeModeBreathing);
-                PlayR2D2Chirp("LOVING_PURR");
-                SmoothDriveMotors(0.20f, 0.20f, 90);
-                StopMotors();
-                OrganicMoveHead(90, 70, 250);
-                OrganicMoveHead(90, 100, 200);
-                is_performing_action_.store(false);
-                return std::string("Empathy comforting gesture executed.");
-            });
+        mcp_server.AddTool("self.trax.express_empathy",
+                           "Cử chỉ AN ỦI THẤU HIỂU: Robot gật đầu nhẹ nhàng trân trọng, mắt hồng "
+                           "ấm áp & tiến nhẹ 1 bước lại gần người dùng.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("express_empathy", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(255, 120, 180, kEyeModeBreathing);
+                               PlayR2D2Chirp("LOVING_PURR");
+                               SmoothDriveMotors(0.20f, 0.20f, 90);
+                               StopMotors();
+                               OrganicMoveHead(90, 70, 250);
+                               OrganicMoveHead(90, 100, 200);
+                               is_performing_action_.store(false);
+                               return std::string("Empathy comforting gesture executed.");
+                           });
 
         // 18. Express Excitement Conversational Gesture Tool
-        mcp_server.AddTool(
-            "self.trax.express_excitement",
-            "Cử chỉ HÀO HỨNG PHẤN KHỞI: Robot bật vươn cao đầu, nhún 2 nhịp xích ăn mừng, mắt vàng chớp nháy & phát chuỗi âm thanh reo vui.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(255, 215, 0, kEyeModeStrobe);
-                PlayR2D2Chirp("HAPPY_ARPEGGIO");
-                OrganicMoveHead(90, 130, 150, true);
-                SmoothDriveMotors(0.30f, -0.30f, 60);
-                SmoothDriveMotors(-0.30f, 0.30f, 60);
-                StopMotors();
-                OrganicMoveHead(90, 95, 150);
-                is_performing_action_.store(false);
-                return std::string("Excitement gesture executed.");
-            });
+        mcp_server.AddTool("self.trax.express_excitement",
+                           "Cử chỉ HÀO HỨNG PHẤN KHỞI: Robot bật vươn cao đầu, nhún 2 nhịp xích ăn "
+                           "mừng, mắt vàng chớp nháy & phát chuỗi âm thanh reo vui.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("express_excitement", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(255, 215, 0, kEyeModeStrobe);
+                               PlayR2D2Chirp("HAPPY_ARPEGGIO");
+                               OrganicMoveHead(90, 130, 150, true);
+                               SmoothDriveMotors(0.30f, -0.30f, 60);
+                               SmoothDriveMotors(-0.30f, 0.30f, 60);
+                               StopMotors();
+                               OrganicMoveHead(90, 95, 150);
+                               is_performing_action_.store(false);
+                               return std::string("Excitement gesture executed.");
+                           });
 
         // 19. Wave & Warm Greeting Gesture Tool
-        mcp_server.AddTool(
-            "self.trax.wave_greeting",
-            "Cử chỉ CHÀO ĐÓN THÂN THIỆN: Robot gật đầu đôi chào mừng, nhún bước nhẹ tiến tới & mắt chớp xanh lam chào bạn.",
-            PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
-                is_performing_action_.store(true);
-                SetEyeColor(0, 255, 120, kEyeModeStrobe);
-                PlayR2D2Chirp("BOOT_POWER_UP");
-                SmoothDriveMotors(0.25f, 0.25f, 90);
-                StopMotors();
-                OrganicMoveHead(90, 120, 150);
-                OrganicMoveHead(90, 80, 150);
-                OrganicMoveHead(90, 105, 150);
-                OrganicMoveHead(90, 95, 150);
-                is_performing_action_.store(false);
-                return std::string("Warm greeting gesture executed.");
-            });
+        mcp_server.AddTool("self.trax.wave_greeting",
+                           "Cử chỉ CHÀO ĐÓN THÂN THIỆN: Robot gật đầu đôi chào mừng, nhún bước nhẹ "
+                           "tiến tới & mắt chớp xanh lam chào bạn.",
+                           PropertyList(), [this](const PropertyList& properties) -> ReturnValue {
+                               std::string err;
+                               if (!CanExecuteTool("wave_greeting", err)) return err;
+                               is_performing_action_.store(true);
+                               SetEyeColor(0, 255, 120, kEyeModeStrobe);
+                               PlayR2D2Chirp("BOOT_POWER_UP");
+                               SmoothDriveMotors(0.25f, 0.25f, 90);
+                               StopMotors();
+                               OrganicMoveHead(90, 120, 150);
+                               OrganicMoveHead(90, 80, 150);
+                               OrganicMoveHead(90, 105, 150);
+                               OrganicMoveHead(90, 95, 150);
+                               is_performing_action_.store(false);
+                               return std::string("Warm greeting gesture executed.");
+                           });
     }
 
     void InitializeDriverEnable() {
@@ -2917,13 +3000,13 @@ private:
 public:
     TRaxBoard() : boot_button_(BOOT_BUTTON_GPIO) {
         InitializeDriverEnable();
-        InitializeI2c();
+        // InitializeI2c();
         InitializeWs2812Led();
         InitializeMotorPwm();
         InitializeServos();
         InitializeButtons();
         InitializeTools();
-        StartTofTask();
+        // StartTofTask();
         StartEyeLedBreathingTask();
         StartIdleSequenceTask();
 
