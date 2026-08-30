@@ -4,9 +4,8 @@
 
 ## Introduction
 
-👉 [Human: Give AI a camera vs AI: Instantly finds out the owner hasn't washed hair for three days【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)
-
-👉 [Handcraft your AI girlfriend, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
+- [Human: Give AI a camera vs AI: Instantly finds out the owner hasn't washed hair for three days (bilibili)](https://www.bilibili.com/video/BV1bpjgzKEhd/)
+- [Handcraft your AI girlfriend, beginner's guide (bilibili)](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
 As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
 
@@ -16,7 +15,7 @@ As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabiliti
     <img src="docs/assets/images/t_rax_3d_front.png" width="45%" alt="Robot T-Rax Front" />
   </a>
   <br />
-  <b>🦖 Robot T-Rax — ESP32-S3 Organic Non-Verbal R2-D2 Droid</b>
+  <b>Robot T-Rax — ESP32-S3 Organic Non-Verbal R2-D2 Droid</b>
 </p>
 
 <img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
@@ -50,7 +49,7 @@ As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabiliti
 
 See the Feishu document tutorial:
 
-👉 ["XiaoZhi AI Chatbot Encyclopedia"](https://ccnphfhqs21z.feishu.cn/wiki/F5krwD16viZoF0kKkvDcrZNYnhb?from=from_copylink)
+- ["XiaoZhi AI Chatbot Encyclopedia"](https://ccnphfhqs21z.feishu.cn/wiki/F5krwD16viZoF0kKkvDcrZNYnhb?from=from_copylink)
 
 Breadboard demo:
 
@@ -69,7 +68,7 @@ Breadboard demo:
 - <a href="https://oshwhub.com/movecall/cuican-ai-pendant-lights-up-y" target="_blank" title="Movecall CuiCan ESP32S3">CuiCan AI Pendant</a>
 - <a href="https://github.com/WMnologo/xingzhi-ai" target="_blank" title="WMnologo-Xingzhi-1.54">WMnologo-Xingzhi-1.54TFT</a>
 - <a href="https://www.seeedstudio.com/SenseCAP-Watcher-W1-A-p-5979.html" target="_blank" title="SenseCAP Watcher">SenseCAP Watcher</a>
-- <a href="main/boards/t-rax/README.md" title="Robot T-Rax Organic Non-Verbal Droid">🦖 Robot T-Rax Organic Non-Verbal Droid (ESP32-S3)</a>
+- <a href="main/boards/t-rax/README.md" title="Robot T-Rax Organic Non-Verbal Droid">Robot T-Rax Organic Non-Verbal Droid (ESP32-S3)</a>
 - <a href="https://www.bilibili.com/video/BV1BHJtz6E2S/" target="_blank" title="ESP-HI Low Cost Robot Dog">ESP-HI Low Cost Robot Dog</a>
 
 <div style="display: flex; justify-content: space-between;">

@@ -1,4 +1,4 @@
-# 🦖 Robot T-Rax - Custom Board & Organic Non-Verbal Droid (R2-D2 Style)
+# Robot T-Rax - Custom Board & Organic Non-Verbal Droid Architecture
 
 <p align="center">
   <img src="../../../docs/assets/images/t_rax_3d_front_right.png" width="45%" alt="T-Rax Front Right" />
@@ -9,117 +9,122 @@
   <img src="../../../docs/assets/images/t_rax_3d_back.png" width="45%" alt="T-Rax Back View" />
 </p>
 
-Dự án firmware tùy chỉnh cho **Robot T-Rax** dựa trên nền tảng **XiaoZhi AI Voice Assistant (ESP32-S3)**. 
+Custom firmware implementation for the **T-Rax Droid Architecture** built upon the **XiaoZhi AI Voice Assistant Framework (ESP32-S3)**.
 
-> ⚠️ **ĐẶC ĐIỂM CỐT LÕI**: T-Rax **KHÔNG PHÁT RA GIỌNG NÓI TIẾNG NGƯỜI**. Robot phản hồi hoàn toàn bằng âm thanh **R2-D2 Chirp/Beep**, kết hợp chuyển động sinh học mượt mà (Cubic Easing), mắt thở WS2812 và cảm biến né va chạm ToF VL53L0X.
-
----
-
-## 📌 1. Cấu Hình Phần Cứng (Hardware Specs)
-
-* **Vi điều khiển chính**: ESP32-S3 SuperMini (4MB Flash, 2MB PSRAM Quad).
-* **Âm thanh I2S**:
-  * Micro I2S: **INMP441**
-  * Mạch công suất âm thanh: **MAX98357A** (Phát tiếng Bíp/Chirp R2-D2 qua sóng tổng hợp I2S)
-* **Cử động chuyển động**:
-  * Động cơ Servo 2 trục cổ đầu (Pan/Tilt - Yaw/Pitch).
-  * 2 Động cơ giảm tốc DC bánh xích lái qua mạch Driver **DRV8833**.
-* **Cảm biến khoảng cách**: **VL53L0X ToF** (I2C Bus).
-* **Đèn biểu cảm mắt**: 1 Đèn LED RGB **WS2812**.
-* **Màn hình**: Không sử dụng (`NoDisplay`).
+> **Architecture Overview**: T-Rax operates entirely as a **non-verbal expressional droid**. It replaces human speech output with synthesized R2-D2 acoustic chirps and sweeps, real-time bio-inspired kinematic trajectory planning (easing curves), WS2812 RGB eye status indications, and active collision avoidance via a Time-of-Flight (VL53L0X) laser distance sensor.
 
 ---
 
-## 🔌 2. Sơ Đồ Chân Kết Nối GPIO (Pinout Matrix)
+## 1. Hardware Architecture
 
-| Linh kiện | Chức năng | Chân linh kiện | GPIO ESP32-S3 SuperMini | Ghi chú |
+* **Microcontroller**: ESP32-S3 SuperMini (4MB Flash, 2MB Quad PSRAM).
+* **Audio Subsystem**:
+  * Microphone: INMP441 I2S MEMS microphone.
+  * Audio Amplifier: MAX98357A I2S DAC/Amplifier (synthesizes R2-D2 acoustic waveforms directly via I2S DMA streaming).
+* **Kinematic Actuation**:
+  * 2-Axis Servo Neck Assembly (Pan/Tilt - Yaw/Pitch).
+  * Dual DC Track Drive Motors controlled via DRV8833 H-Bridge Dual Motor Driver.
+* **Range Finding**: VL53L0X Laser Time-of-Flight Distance Sensor (I2C Master Bus).
+* **Visual Expressional Status**: WS2812 Single RGB Addressable LED (RMT Peripheral Controller).
+* **Display Interface**: Headless configuration (`NoDisplay`).
+
+---
+
+## 2. Pinout Matrix
+
+| Subsystem | Function | Hardware Pin | ESP32-S3 GPIO | Interface Type |
 | :--- | :--- | :--- | :--- | :--- |
-| **INMP441 (Micro I2S)** | Bit Clock | `SCK` | **`GPIO 4`** | I2S0 Input |
+| **INMP441 Microphone** | Bit Clock | `SCK` | **`GPIO 4`** | I2S0 Input |
 | | Word Select | `WS` | **`GPIO 5`** | I2S0 Input |
-| | Data Out | `SD` | **`GPIO 6`** | I2S0 Input |
-| **MAX98357A (Loa Amp)** | Bit Clock | `BCLK` | **`GPIO 7`** | I2S1 Output |
+| | Data Output | `SD` | **`GPIO 6`** | I2S0 Input |
+| **MAX98357A DAC/Amp** | Bit Clock | `BCLK` | **`GPIO 7`** | I2S1 Output |
 | | Left/Right Clock | `LRCK` | **`GPIO 15`** | I2S1 Output |
-| | Data In | `DIN` | **`GPIO 16`** | I2S1 Output |
-| **VL53L0X (ToF Sensor)** | I2C Data | `SDA` | **`GPIO 8`** | I2C Master Bus |
+| | Data Input | `DIN` | **`GPIO 16`** | I2S1 Output |
+| **VL53L0X Distance Sensor** | I2C Data | `SDA` | **`GPIO 8`** | I2C Master Bus |
 | | I2C Clock | `SCL` | **`GPIO 9`** | I2C Master Bus |
-| **DRV8833 (Bánh xích)** | Động cơ Trái A | `AIN1` | **`GPIO 10`** | PWM Motor Control |
-| | Động cơ Trái B | `AIN2` | **`GPIO 11`** | PWM Motor Control |
-| | Động cơ Phải A | `BIN1` | **`GPIO 12`** | PWM Motor Control |
-| | Động cơ Phải B | `BIN2` | **`GPIO 13`** | PWM Motor Control |
-| **2x Servos (Đầu)** | Trục Quay Ngang | `Pan PWM` | **`GPIO 14`** | LEDC PWM (Servo 1) |
-| | Trục Gật | `Tilt PWM` | **`GPIO 17`** | LEDC PWM (Servo 2) |
-| **WS2812 (Mắt)** | Data Input | `DIN` | **`GPIO 48`** | WS2812 RMT Controller |
-| **Nút bấm** | BOOT / Config | `BOOT` | **`GPIO 0`** | Onboard Boot Button |
+| **DRV8833 Motor Driver** | Left Motor A | `AIN1` | **`GPIO 10`** | LEDC Hardware PWM |
+| | Left Motor B | `AIN2` | **`GPIO 11`** | LEDC Hardware PWM |
+| | Right Motor A | `BIN1` | **`GPIO 12`** | LEDC Hardware PWM |
+| | Right Motor B | `BIN2` | **`GPIO 13`** | LEDC Hardware PWM |
+| **Pan/Tilt Neck Servos** | Pan Axis | `Pan PWM` | **`GPIO 14`** | LEDC Hardware PWM (Servo 1) |
+| | Tilt Axis | `Tilt PWM` | **`GPIO 17`** | LEDC Hardware PWM (Servo 2) |
+| **WS2812 RGB Eye LED** | Data Input | `DIN` | **`GPIO 48`** | RMT Hardware Channel |
+| **User Input** | Boot / Config | `BOOT` | **`GPIO 0`** | GPIO Input Button |
 
 ---
 
-## 🌊 3. Động Lực Học Chuyển Động Sinh Học (Organic Motion Engine)
+## 3. Organic Motion Engine
 
-### 3.1. Thuật toán nội suy phi tuyến (Easing Functions)
-Cổ Robot chuyển động mượt mà nhờ 2 thuật toán nội suy:
-- **Cubic Ease-In-Out**: Tăng tốc và giảm tốc êm ái cho cử động bình thường.
-  $$f(t) = \begin{cases} 4t^3 & \text{nếu } t < 0.5 \\ 1 - \frac{(-2t + 2)^3}{2} & \text{nếu } t \ge 0.5 \end{cases}$$
-- **Back Ease-Out**: Nhún vượt mục tiêu $1\text{--}2^\circ$ rồi nhún nhẹ hồi về vị trí (Áp dụng cho giật mình / ngạc nhiên).
+### 3.1. Non-linear Trajectory Easing
+Servo head trajectories utilize organic non-linear easing functions for smooth bio-inspired motion:
+- **Cubic Ease-In-Out**: Acceleration and deceleration profiles for smooth head shifts.
+  $$f(t) = \begin{cases} 4t^3 & \text{if } t < 0.5 \\ 1 - \frac{(-2t + 2)^3}{2} & \text{if } t \ge 0.5 \end{cases}$$
+- **Back Ease-Out**: Overshoot trajectory ($1\text{--}2^\circ$) with elastic recovery for startled reactions.
 
-### 3.2. Vi chuyển động nhịp thở (Micro-jitter Breathing)
-Khi ở chế độ chờ (Idle), đầu Robot tự động dao động vi sóng biên độ nhỏ $0.5^\circ - 1.2^\circ$:
+### 3.2. Micro-Jitter Breathing Simulation
+When in IDLE state, the neck servos maintain continuous bio-mimetic micro-oscillations ($0.5^\circ - 1.2^\circ$ amplitude):
 $$\theta_{pan}(t) = 90^\circ + 1.2^\circ \cdot \sin(0.4t) + 0.6^\circ \cdot \cos(0.2t)$$
 $$\theta_{tilt}(t) = 90^\circ + 0.8^\circ \cdot \sin(0.3t) + 0.4^\circ \cdot \cos(0.5t)$$
 
-### 3.3. Bộ lọc thông thấp cho động cơ bánh xích (PWM Low-Pass Filter)
-Giảm xóc và chống sụt áp tức thì cho driver DRV8833:
+### 3.3. PWM Low-Pass Filtering for Track Drive Motors
+Low-pass filter smooths motor torque transitions and eliminates current spikes on the DRV8833 driver:
 $$PWM_{out}(k) = PWM_{out}(k-1) + \alpha \cdot \big(PWM_{target} - PWM_{out}(k-1)\big) \quad (\alpha = 0.15)$$
 
 ---
 
-## 🎭 4. Ma Trận 23 Trạng Thái Cảm Xúc & Hành Vi (Phi Ngôn Ngữ R2-D2)
+## 4. Emotional State & Behaviour Matrix (28 Expressional Scenarios)
 
-1. **Tò mò** (Cyan Breathing, Pan=120, Tilt=110, Whistle)
-2. **Tập trung** (Green Solid, Pan=90, Tilt=100, Beep)
-3. **Cảnh báo** (Orange Strobe, Pan=90, Tilt=130, Alert Sweep)
-4. **Tức giận** (Red Strobe, Motor Wiggle, Buzz)
-5. **Sợ hãi** (Purple Strobe, Motor Backward 30cm, Scream)
-6. **Vui vẻ** (Green Breathing, Motor Wiggle, Arpeggio)
-7. **Thất vọng** (Dark Blue, Cúi gầm mặt, Sad Slide Down)
-8. **Phát hiện mục tiêu** (Yellow Solid, Target Lock Beep)
-9. **Bối rối** (Magenta Breathing, Nghiêng cổ 45°, Question Chirp)
-10. **Ngạc nhiên** (White Strobe, High Chirp)
-11. **Nghi ngờ** (Amber Breathing, Ngó xiên, Low Chirp)
-12. **Yêu thương** (Pink Breathing, Loving Purr)
-13. **Chiến thắng** (Cyan Strobe, Motor Wiggle, Fanfare)
-14. **E ngại** (Light Pink, Quay đi cúi mặt, Whimper)
-15. **Chán nản** (Dim Grey, Cúi nghiêng, Sigh)
-16. **Kiêu ngạo** (Gold Solid, Vếch mặt lên trời, Proud Tune)
-17. **Tìm kiếm** (Blue Strobe, Quét đầu 45-135°, Radar Sweep)
-18. **Lỗi hệ thống** (Red Strobe, Glitch Noise)
-19. **Sắp hết pin** (Dim Red Breathing, Gục đầu, Low Power Beep)
-20. **Đang sạc pin** (Green Breathing, Charging Hum)
-21. **Khởi động** (White Breathing, Power Up)
-22. **Ngủ** (LED Off, Gục đầu 20°)
-23. **IDLE Tự do** (Tự chạy chuỗi cử động ngẫu nhiên 5-12s/lần)
-
----
-
-## 🚨 5. Tự Động Né Va Chạm (VL53L0X ToF Sensor)
-
-Khi cảm biến VL53L0X phát hiện vật cản $< 15cm$ ($150mm$):
-1. **Phản xạ giật mình khẩn cấp**:
-   - Động cơ bánh xích tự động lùi lại 400ms.
-   - Đầu ngẩng lên cao (`Tilt=140°`).
-   - Đèn mắt WS2812 chớp sáng màu Vàng/Trắng (`Strobe`).
-   - Phát âm thanh R2-D2 giật mình.
-2. **Thời gian Cooldown**: 2 giây chống lặp phản xạ liên tục.
+1. **Curious** (Cyan Breathing, Pan=120, Tilt=110, Whistle)
+2. **Focused** (Green Solid, Pan=90, Tilt=100, Beep)
+3. **Alert Warning** (Orange Strobe, Pan=90, Tilt=130, Alert Sweep)
+4. **Angry** (Red Strobe, Motor Wiggle, Buzz)
+5. **Scared** (Purple Strobe, Motor Reverse 30cm, Scream)
+6. **Happy** (Green Breathing, Motor Wiggle, Arpeggio)
+7. **Disappointed** (Dark Blue, Head Droop, Sad Slide Down)
+8. **Target Detected** (Yellow Solid, Target Lock Beep)
+9. **Confused** (Magenta Breathing, Tilt Head 45°, Question Chirp)
+10. **Surprised** (White Strobe, High Chirp)
+11. **Suspicious** (Amber Breathing, Side Glare, Low Chirp)
+12. **Loving** (Pink Breathing, Loving Purr)
+13. **Victorious** (Cyan Strobe, Motor Wiggle, Fanfare)
+14. **Shy** (Light Pink, Turn Head Away, Whimper)
+15. **Bored** (Dim Grey, Tilting Droop, Sigh)
+16. **Arrogant** (Gold Solid, Upward Tilt, Proud Tune)
+17. **Searching** (Blue Strobe, Pan Scan 45-135°, Radar Sweep)
+18. **System Fault** (Red Strobe, Glitch Noise)
+19. **Low Battery** (Dim Red Breathing, Head Droop, Low Power Beep)
+20. **Charging** (Green Breathing, Charging Hum)
+21. **Booting** (White Breathing, Power Up)
+22. **Sleeping** (LED Off, Head Droop 20°)
+23. **Idle** (Autonomous micro-gesture sequence every 5-12s)
+24. **Alien Contact Ritual** (~7.5s Story Scenario)
+25. **The Great Mosquito Battle** (~8.0s Story Scenario)
+26. **Archaeologist Fossil Dig** (~8.5s Story Scenario)
+27. **Thunderstorm Terror & Courage** (~9.0s Story Scenario)
+28. **Robot System Reboot & Diagnostic** (~9.5s Story Scenario)
 
 ---
 
-## 🛠️ 6. Hướng Dẫn Biên Dịch & Nạp Firmware
+## 5. Collision Avoidance Subsystem (VL53L0X Laser ToF Sensor)
 
-### Biên dịch Firmware:
+When distance measurements fall below $150\text{mm}$ ($15\text{cm}$):
+1. **Emergency Reflex**:
+   - Drive motors initiate a 400ms emergency reverse maneuver.
+   - Neck servos raise tilt angle (`Tilt=140°`).
+   - WS2812 RGB Eye LED triggers high-frequency Strobe mode (Amber/White).
+   - Audio synthesizer plays an emergency startled chirp.
+2. **Cooldown Protection**: 2.0-second lockout prevents reflexive oscillation loops.
+
+---
+
+## 6. Build & Flash Instructions
+
+### Build Firmware:
 ```bash
 python3 scripts/build.py t-rax
 ```
 
-### Nạp vào bo mạch ESP32-S3 SuperMini:
+### Flash to Target Hardware (ESP32-S3 SuperMini):
 ```bash
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
