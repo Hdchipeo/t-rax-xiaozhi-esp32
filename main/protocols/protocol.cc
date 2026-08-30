@@ -65,8 +65,12 @@ void Protocol::SendAbortSpeaking(AbortReason reason) {
 }
 
 void Protocol::SendWakeWordDetected(const std::string& wake_word) {
+    std::string clean_word = wake_word;
+    if (clean_word == "Hi,Joy" || clean_word == "Hi, Joy") {
+        clean_word = "hi_joy";
+    }
     std::string json = "{\"session_id\":\"" + session_id_ +
-                       "\",\"type\":\"listen\",\"state\":\"detect\",\"text\":\"" + wake_word +
+                       "\",\"type\":\"listen\",\"state\":\"detect\",\"text\":\"" + clean_word +
                        "\"}";
     SendText(json);
 }
