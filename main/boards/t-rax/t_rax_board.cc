@@ -402,6 +402,13 @@ private:
     }
 
     void PlayR2D2Chirp(const char* sound_name) {
+        // Prevent acoustic mic self-feedback loops during active voice listening state
+        auto dev_state = Application::GetInstance().GetDeviceState();
+        if (dev_state == kDeviceStateListening) {
+            ESP_LOGW(TAG, "PlayR2D2Chirp[%s] suppressed during active listening state", sound_name);
+            return;
+        }
+
         ESP_LOGI(TAG, "R2D2 Audio Synthesizer: Playing [%s]", sound_name);
         std::vector<int16_t> pcm_data;
 
@@ -1363,10 +1370,16 @@ private:
 
         mcp_server.AddTool(
             "self.trax.set_state",
-            "Đặt 1 trong 23 trạng thái cảm xúc cho Robot T-Rax (1..23). CHỈ GỌI 1 LẦN DUY NHẤT.",
-            PropertyList({Property("state_id", kPropertyTypeInteger, 1, 23)}),
+            "Đặt 1 trong 17 trạng thái cảm xúc cho Robot T-Rax (1..17: 1=Tò mò, 2=Tập trung, 3=Cảnh báo, 4=Tức giận, 5=Sợ hãi, 6=Vui vẻ, 7=Thất vọng, 8=Phát hiện mục tiêu, 9=Bối rối, 10=Ngạc nhiên, 11=Nghi ngờ, 12=Yêu thương, 13=Chiến thắng, 14=E ngại, 15=Chán nản, 16=Kiêu ngạo, 17=Tìm kiếm). CHỈ GỌI 1 LẦN DUY NHẤT.",
+            PropertyList({Property("state_id", kPropertyTypeInteger, 1, 17)}),
             [this](const PropertyList& properties) -> ReturnValue {
                 int state_id = properties["state_id"].value<int>();
+
+                // Clamp state_id to valid conversational emotion range (1..17)
+                if (state_id < 1 || state_id > 17) {
+                    ESP_LOGW(TAG, "set_state(%d) out of range (1..17), clamping to Happy (6)", state_id);
+                    state_id = 6;
+                }
 
                 // === RATE-LIMITING: Reject duplicate calls within 3-second cooldown ===
                 TickType_t now = xTaskGetTickCount();
