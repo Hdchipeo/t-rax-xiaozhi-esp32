@@ -1137,13 +1137,6 @@ public:
         // Action completed, resume gentle organic breathing & micro-saccades seamlessly
         vTaskDelay(pdMS_TO_TICKS(150));
         is_performing_action_.store(false);
-
-        // Auto-resume Listening mode after completing physical response action
-        auto& app = Application::GetInstance();
-        auto dev_st = app.GetDeviceState();
-        if (dev_st != kDeviceStateListening && dev_st != kDeviceStateWifiConfiguring && dev_st != kDeviceStateStarting) {
-            app.SetDeviceState(kDeviceStateListening);
-        }
     }
 
 private:
