@@ -677,6 +677,22 @@ void Application::InitializeProtocol() {
                 ESP_LOGW(TAG, "Invalid custom message format: missing payload");
             }
 #endif
+        } else if (strcmp(type->valuestring, "error") == 0) {
+            auto message = cJSON_GetObjectItem(root, "message");
+            auto code = cJSON_GetObjectItem(root, "code");
+            std::string err_msg = cJSON_IsString(message) ? message->valuestring : "Server error";
+            int err_code = cJSON_IsNumber(code) ? code->valueint : 0;
+            char* raw_json = cJSON_PrintUnformatted(root);
+            ESP_LOGE(TAG, "Server returned error [%d]: %s (Raw: %s)", 
+                     err_code, err_msg.c_str(), raw_json ? raw_json : "");
+            if (raw_json != nullptr) {
+                free(raw_json);
+            }
+            Schedule([this, display, err_msg]() {
+                display->SetChatMessage("system", err_msg.c_str());
+                display->SetEmotion("sad");
+                display->SetStatus(Lang::Strings::SERVER_ERROR);
+            });
         } else {
             ESP_LOGW(TAG, "Unknown message type: %s", type->valuestring);
         }
